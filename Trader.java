@@ -23,7 +23,7 @@ public class Trader
     public static final String PWD = "504";
 	
 	
-	//Constructor
+	//Constructor -
 	public Trader(String username)
 	{
 		this.username = username;
