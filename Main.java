@@ -33,11 +33,46 @@ public class Main{
 				//System.out.println(role);
 				if (role.equals("t")) {
 					System.out.println("Successful!");
+					// try
+					// {
+					// 	connection = DriverManager.getConnection(HOST,USER,PWD);
+					// 	String QUERY = "select username, password from Customer_Profile where username=? and password=?";
+
+					// 	PreparedStatement myQuery = connection.prepareStatement(QUERY);
+					// 	myQuery.setString(1, username);
+					// 	myQuery.setString(2, password);
+		   //      		ResultSet resultSet = myQuery.executeQuery();
+		   //      		boolean empty = true;
+	    //     			while (resultSet.next()) {
+	    //      				empty = false;
+	    //         		}
+	    //     			if(empty){
+	    //     				System.out.println("Incorrect username or password. Please try again.");
+	    //     			}
+	    //     			else{
+	    //     				System.out.println("Log in successfully! Welcome to your Manager Portal!");
+	    //     			}
+	    // 			}
+	    // 			catch(SQLException e)
+	    // 			{
+	    // 				e.printStackTrace();
+	    // 			}
 					//Trader trader = new Trader();
 					break;
 				}
 				if (role.equals("m")) {
-					//Manager mnager = new Manager();
+					while(true) {
+						System.out.println("Enter your username.");
+						String username = reader.nextLine();
+						System.out.println("Enter your password.");
+						String password = reader.nextLine();
+						if(username.equals("admin") && password.equals("secret")) {
+							System.out.println("Log in successfully!");
+							Manager manager = new Manager("admin");
+							manager.addInterest();
+							break;
+						}
+	    			}
 					break;
 				}
 				if (role.equals("q")) {
@@ -50,4 +85,5 @@ public class Main{
 		}
 
 		System.exit(0);
+	}
 }
