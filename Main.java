@@ -1,7 +1,12 @@
 import java.io.*;
+import java.sql.*;
 import java.util.Scanner;
 
 public class Main{
+	public static final String HOST = "jdbc:mysql://cs174a.engr.ucsb.edu:3306/srimatDB";
+    public static final String USER = "srimat";
+    public static final String PWD = "504";
+	
 	public static void main(String [ ] args)
 	{
 		// Trader trader = new Trader("Sai");
@@ -20,7 +25,6 @@ public class Main{
 		System.out.println("Welcome to StarsRus Brokerage!");
 		System.out.println("Are you a trader or a manager? Enter t for trader and m for manager. Enter q to exit.");
 		
-
 		while(true) {
 			Scanner reader = new Scanner(System.in);
 			String role = reader.nextLine();
@@ -30,34 +34,51 @@ public class Main{
 				System.out.println("Too many characters. Enter t or m to log into your account.");
 			}
 			else{
-				//System.out.println(role);
 				if (role.equals("t")) {
-					System.out.println("Successful!");
-					// try
-					// {
-					// 	connection = DriverManager.getConnection(HOST,USER,PWD);
-					// 	String QUERY = "select username, password from Customer_Profile where username=? and password=?";
+					String username = "";
+					while(true) {
+						System.out.println("Welcome! Please provide a valid username: ");
+				  		username = reader.nextLine();
+					  	System.out.println("and now a valid password: ");
+						String password = reader.nextLine();
+						//System.out.println(username + " " + password);
+						Connection connection = null;
+					    Statement statement = null;
 
-					// 	PreparedStatement myQuery = connection.prepareStatement(QUERY);
-					// 	myQuery.setString(1, username);
-					// 	myQuery.setString(2, password);
-		   //      		ResultSet resultSet = myQuery.executeQuery();
-		   //      		boolean empty = true;
-	    //     			while (resultSet.next()) {
-	    //      				empty = false;
-	    //         		}
-	    //     			if(empty){
-	    //     				System.out.println("Incorrect username or password. Please try again.");
-	    //     			}
-	    //     			else{
-	    //     				System.out.println("Log in successfully! Welcome to your Manager Portal!");
-	    //     			}
-	    // 			}
-	    // 			catch(SQLException e)
-	    // 			{
-	    // 				e.printStackTrace();
-	    // 			}
-					//Trader trader = new Trader();
+						try{
+							Class.forName("com.mysql.jdbc.Driver");
+						} 
+						catch(ClassNotFoundException e){
+							e.printStackTrace();
+						}
+
+						try
+						{
+							connection = DriverManager.getConnection(HOST,USER,PWD);
+							String QUERY = "select username, password from Customer_Profile where username=? and password=?";
+
+							PreparedStatement myQuery = connection.prepareStatement(QUERY);
+							myQuery.setString(1, username);
+							myQuery.setString(2, password);
+			        		ResultSet resultSet = myQuery.executeQuery();
+			        		boolean empty = true;
+		        			while (resultSet.next()) {
+		         				empty = false;
+		            		}
+		        			if(empty){
+		        				System.out.println("Incorrect username or password. Please try again.");
+		        			}
+		        			else{
+		        				System.out.println("Log in successfully! Welcome to your Trader Portal!");
+		        				break;
+		        			}
+		    			}
+		    			catch(SQLException e)
+		    			{
+		    				e.printStackTrace();
+		    			}
+	    			}
+					Trader trader = new Trader(username);
 					break;
 				}
 				if (role.equals("m")) {
@@ -67,10 +88,13 @@ public class Main{
 						System.out.println("Enter your password.");
 						String password = reader.nextLine();
 						if(username.equals("admin") && password.equals("secret")) {
-							System.out.println("Log in successfully!");
+							System.out.println("Log in successfully! Welcome to your Manager Portal!");
 							Manager manager = new Manager("admin");
-							manager.addInterest();
+							manager.menu();
 							break;
+						}
+						else{
+							System.out.println("Incorrect username or password. Please try again.");
 						}
 	    			}
 					break;
