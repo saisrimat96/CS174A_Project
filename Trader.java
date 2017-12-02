@@ -1,6 +1,6 @@
 /*
 
-Sai Srimat, Ziheng Song: Manager Class
+Sai Srimat, Ziheng Song: Trader Class
 
 */
 
@@ -56,53 +56,115 @@ public class Trader
 
 	}
 
-	// public void Deposit(int taxid, double amount)
-	// {
-	// 	Connection connection = null;
-	//     Statement statement = null;
-
-	// 	try
-	// 	{
-	// 		Class.forName("com.mysql.jdbc.Driver");
-	// 	} 
-	// 	catch(ClassNotFoundException e){
-	// 		e.printStackTrace();
-	// 	}
-
-	// 	try
-	// 	{
-	// 		connection=DriverManager.getConnection(HOST,USER,PWD);
-	// 		String QUERY1 = "update Market_Accounts set balance = ";
-	// 		String QUERY2 = "";
-
-	// 		PreparedStatement myQuery = connection.prepareStatement(QUERY);
-	// 		myQuery.setString(1, username);
-	// 		myQuery.setString(2, password);
-	//         ResultSet resultSet = myQuery.executeQuery();
-	//         boolean empty = true;
-	//         while (resultSet.next()) {
-	//          	empty = false;
-	//             }
-	//         if(empty){
-	//         	System.out.println("Incorrect username or password. Please try again.");
-	//         }
-	//         else{
-	//         	System.out.println("Login successful! Welcome to your Trader Portal!");
-	//         }
-	//     }
-	//     catch(SQLException e)
-	//     {
-	//     	e.printStackTrace();
-	//     }
 
 
-	// }
-	/*
-	public void Withdrawal()
+	//Make Deposit: Takes in taxid and amount one wishes to deposit
+	public void Deposit(int taxid, double amount)
 	{
-		
+		Connection connection = null;
+	    Statement statement = null;
+
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e){
+			e.printStackTrace();
+		}
+
+		try
+		{
+			double trans = amount;
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Statement stmt=connection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			if(rs.next()){
+				double temp = rs.getDouble(1);
+				System.out.println("Your Current Balance before Deposit: " + temp);
+				amount += temp;
+			}
+			rs.close();
+			stmt.close();
+
+			String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+			
+
+
+			PreparedStatement myQuery = connection.prepareStatement(QUERY1);
+			myQuery.setDouble(1, amount);
+			myQuery.setInt(2, taxid);
+	        myQuery.executeUpdate();
+	        myQuery.close();
+	        
+	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit'," + trans + ",NULL,NULL," + taxid + ");";
+	        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+	        myQuery1.executeUpdate();
+	        myQuery1.close();
+	        connection.close();
+
+	        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
+
+	    }
+	    catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
 	}
 
+	//Make Withdrawal: Takes in taxid and amount one wishes to Withdrawal
+	public void Withdrawal(int taxid, double amount)
+	{
+		Connection connection = null;
+	    Statement statement = null;
+
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			double trans = amount;
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Statement stmt=connection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			if(rs.next()){
+				double temp = rs.getDouble(1);
+				System.out.println("Your Current Balance before Withdrawal: " + temp);
+				amount = temp - trans;
+			}
+			rs.close();
+			stmt.close();
+
+			String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+			
+
+
+			PreparedStatement myQuery = connection.prepareStatement(QUERY1);
+			myQuery.setDouble(1, amount);
+			myQuery.setInt(2, taxid);
+	        myQuery.executeUpdate();
+	        myQuery.close();
+	        
+	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit', -" + trans + ",NULL,NULL," + taxid + ");";
+	        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+	        myQuery1.executeUpdate();
+	        myQuery1.close();
+	        connection.close();
+
+	        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
+
+	    }
+	    catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+	}
+/*
 	public void Buy()
 	{
 		
@@ -113,26 +175,87 @@ public class Trader
 		
 	}
 
-	public double getBalance()
+*/	
+	//Show's current balance in trader's market account
+	public void showBalance()
 	{
-	
+		Connection connection = null;
+	    Statement statement = null;
+
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e){
+			e.printStackTrace();
+		}
+
+		try
+		{
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Statement stmt=connection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			if(rs.next()){
+				double temp = rs.getDouble(1);
+				System.out.println("Your Current Balance is: " + temp);
+			}
+			rs.close();
+			stmt.close();
+			connection.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
 	}
 
-	public double showBalance()
-	{
-
-	}
-
+	//Show's trader's transaction history
 	public void showTransactions()
 	{
+		Connection connection = null;
+	    Statement statement = null;
 
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e){
+			e.printStackTrace();
+		}
+
+		try
+		{
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Statement stmt=connection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM Transactions WHERE taxId=" + taxid);
+			if(rs.next()){
+				int t1 = rs.getInt("transactionsId");
+				String t2 = rs.getString("date");
+				String t3 = rs.getString("type");
+				Double t4 = rs.getDouble("amount");
+				int t5 = rs.getInt("numShares");
+				int t6 = rs.getInt("stockId");
+				int t7 = rs.getInt("taxId");
+				System.out.println("Trans History for: " + name);
+				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", stockId: " + t6 + ", taxId: " + t7);
+
+			}
+			rs.close();
+			stmt.close();
+			connection.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
 	}
 
-	public void showCurrPrice()
+	//Retrieves current price of a stock and the Actor or Director's Profile
+	public void showStockProf(String symbol)
 	{
 
 	}
-
+/*
 	public void Movie()
 	{
 
