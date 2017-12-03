@@ -9,6 +9,8 @@ public class Main{
 	
 	public static void main(String [ ] args)
 	{
+<<<<<<< HEAD
+=======
 		// Trader trader = new Trader("Sai");
 
 		// trader.setUserName("srimat");
@@ -110,5 +112,6 @@ public class Main{
 		}
 
 		System.exit(0);
+>>>>>>> 7392c7982412aec67a8143895ab62a8684cec040
 	}
 }
