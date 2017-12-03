@@ -79,6 +79,7 @@ public class Main{
 		    			}
 	    			}
 					Trader trader = new Trader(username);
+					trader.menu();
 					break;
 				}
 				if (role.equals("m")) {
@@ -89,21 +90,21 @@ public class Main{
 						String password = reader.nextLine();
 						if(username.equals("admin") && password.equals("secret")) {
 							System.out.println("Log in successfully! Welcome to your Manager Portal!");
-							Manager manager = new Manager("admin");
-							manager.menu();
 							break;
 						}
 						else{
 							System.out.println("Incorrect username or password. Please try again.");
 						}
 	    			}
+	    			Manager manager = new Manager("admin");
+					manager.menu();
 					break;
 				}
 				if (role.equals("q")) {
 					break;
 				}
 				else {
-					System.out.println("Incorrect input. Enter t or m to log into your account.");
+					System.out.println("Incorrect input.");
 				}
 			}
 		}
