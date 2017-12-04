@@ -72,6 +72,7 @@ public class Main{
 	    			}
 					
 					// break;
+
 				}
 				if (role.equals("m")) {
 					while(true) {
@@ -80,7 +81,7 @@ public class Main{
 						System.out.println("Enter your password.");
 						String password = reader.nextLine();
 						if(username.equals("admin") && password.equals("secret")) {
-							System.out.println("Log in successful! Welcome to your Manager Portal!");
+							System.out.println("Log in successfully! Welcome to your Manager Portal!");
 							Manager manager = new Manager("admin");
 							manager.menu();
 							break;
@@ -89,13 +90,14 @@ public class Main{
 							System.out.println("Incorrect username or password. Please try again.");
 						}
 	    			}
+	    			
 					break;
 				}
 				if (role.equals("q")) {
 					break;
 				}
 				else {
-					System.out.println("Incorrect input. Enter t or m to log into your account.");
+					System.out.println("Incorrect input.");
 				}
 			}
 		}
