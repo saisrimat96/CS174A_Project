@@ -237,9 +237,9 @@ public class Manager
 
 	public void menu()
 	{
+		System.out.println("\n----------Welcome to the Manager Interface!----------");
 		while(true){
-			System.out.println("----------Welcome to the Manager Interface!----------");
-			System.out.println("Do you wish to: ");
+			System.out.println("\nDo you wish to: ");
 			System.out.println("(1) Add Interest for all Market Accounts");
 			System.out.println("(2) Generate Monthly Statement for a particular customer");
 			System.out.println("(3) List Active Customers");
@@ -255,7 +255,7 @@ public class Manager
 		  	switch(answer){
 		  		case "1":
 		  			while(true) {
-		  				System.out.println("Are you sure to add Interest for all Market Accounts? Enter 'y' for yes or 'n' for no.");
+		  				System.out.println("\nAre you sure to add Interest for all Market Accounts? Enter 'y' for yes or 'n' for no.");
 		  				String answer1 = reader.nextLine();
 		  				if(answer1.equals("y")) {
 			  				addInterest();
@@ -265,16 +265,16 @@ public class Manager
 			  				break;
 			  			}
 			  			else{
-			  				System.out.println("The option you chose is not listed. Please provide a valid option.");
+			  				System.out.println("\nThe option you chose is not listed. Please provide a valid option.");
 			  			}
 			  		}
 		  			break;
 		  		case "2":
-		  			System.out.println("Which customer's statement would you like to generate?");
+		  			System.out.println("\nWhich customer's statement would you like to generate?");
 		  			String name2 = reader.nextLine();
 		  			genStatement(name2);
 		  			while(true) {
-		  				System.out.println("Do you wish to go back to manager menu? Enter 'y' for yes or 'q' to exit Manager Interface.");
+		  				System.out.println("\nDo you wish to go back to manager menu? Enter 'y' for yes or 'q' to exit Manager Interface.");
 		  				String answer2 = reader.nextLine();
 		  				if(answer2.equals("q")) {
 		  					System.exit(0);
@@ -283,7 +283,7 @@ public class Manager
 		  					break;
 		  				}
 		  				else{
-		  					System.out.println("The option you chose is not listed. Please provide a valid option.");
+		  					System.out.println("\nThe option you chose is not listed. Please provide a valid option.");
 		  				}
 		  			}
 		  			break;
@@ -292,11 +292,11 @@ public class Manager
 		  		// case "4":
 		  		// 	genDTER();
 		  		case "5":
-		  			System.out.println("Which customer's report would you like to check?");
+		  			System.out.println("\nWhich customer's report would you like to check?");
 		  			String name5 = reader.nextLine();
 		  			report(name5);
 		  			while(true) {
-		  				System.out.println("Do you wish to go back to manager menu? Enter 'y' for yes or 'q' to exit Manager Interface.");
+		  				System.out.println("\nDo you wish to go back to manager menu? Enter 'y' for yes or 'q' to exit Manager Interface.");
 		  				String answer2 = reader.nextLine();
 		  				if(answer2.equals("q")) {
 		  					System.exit(0);
@@ -305,13 +305,13 @@ public class Manager
 		  					break;
 		  				}
 		  				else{
-		  					System.out.println("The option you chose is not listed. Please provide a valid option.");
+		  					System.out.println("\nThe option you chose is not listed. Please provide a valid option.");
 		  				}
 		  			}
 		  			break;
 		  		case "6":
 		  			while(true) {
-			  			System.out.println("Are you sure to delete Transactions from all Accounts? Enter 'y' for yes or 'n' for no.");
+			  			System.out.println("\nAre you sure to delete Transactions from all Accounts? Enter 'y' for yes or 'n' for no.");
 			  			String answer6 = reader.nextLine();
 			  			if(answer6.equals("y")) {
 			  				deleteTransactions();
@@ -321,12 +321,12 @@ public class Manager
 			  				break;
 			  			}
 			  			else{
-			  				System.out.println("The option you chose is not listed. Please provide a valid option.");
+			  				System.out.println("\nThe option you chose is not listed. Please provide a valid option.");
 			  			}
 			  		}
 		  			break;
 		 		default:
-		 			System.out.println("The option you chose is not listed. Please provide a valid option");
+		 			System.out.println("\nThe option you chose is not listed. Please provide a valid option");
 		 			break;
 		  	}
 		}
