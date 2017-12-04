@@ -9,23 +9,8 @@ public class Main{
 	
 	public static void main(String [ ] args)
 	{
-<<<<<<< HEAD
-=======
-		// Trader trader = new Trader("Sai");
-
-		// trader.setUserName("srimat");
-	 //    trader.setPassword("1234");
-	 //    trader.setState("CA");
-	 //    trader.setPhone("6504549782");
-
-	 //    System.out.println("Name:"+ trader.name );
-	 //    System.out.println("Username:"+ trader.username );
-	 //    System.out.println("Password:" + trader.password );
-	 //    System.out.println("State:" + trader.state);
-	 //  	System.out.println("Phone:" + trader.phone);
-
-		System.out.println("Welcome to StarsRus Brokerage!");
-		System.out.println("Are you a trader or a manager? Enter t for trader and m for manager. Enter q to exit.");
+		System.out.println("----------Welcome to StarsRus Brokerage!----------");
+		System.out.println("Are you a trader or a manager? Enter 't' for trader or 'm' for manager. Enter 'q' to exit.");
 		
 		while(true) {
 			Scanner reader = new Scanner(System.in);
@@ -33,13 +18,13 @@ public class Main{
 
 			if(role.length() != 1) {
 				System.out.println(role);
-				System.out.println("Too many characters. Enter t or m to log into your account.");
+				System.out.println("Too many characters. Enter t or m to choose your account type.");
 			}
 			else{
 				if (role.equals("t")) {
 					String username = "";
 					while(true) {
-						System.out.println("Welcome! Please provide a valid username: ");
+						System.out.println("Please provide a valid username: ");
 				  		username = reader.nextLine();
 					  	System.out.println("and now a valid password: ");
 						String password = reader.nextLine();
@@ -71,8 +56,10 @@ public class Main{
 		        				System.out.println("Incorrect username or password. Please try again.");
 		        			}
 		        			else{
-		        				System.out.println("Log in successfully! Welcome to your Trader Portal!");
-		        				break;
+		        				System.out.println("Log in successfully!");
+		        				Trader trader = new Trader(username);
+								trader.menu();
+								break;
 		        			}
 		    			}
 		    			catch(SQLException e)
@@ -80,9 +67,6 @@ public class Main{
 		    				e.printStackTrace();
 		    			}
 	    			}
-					Trader trader = new Trader(username);
-					trader.menu();
-					break;
 				}
 				if (role.equals("m")) {
 					while(true) {
@@ -91,15 +75,15 @@ public class Main{
 						System.out.println("Enter your password.");
 						String password = reader.nextLine();
 						if(username.equals("admin") && password.equals("secret")) {
-							System.out.println("Log in successfully! Welcome to your Manager Portal!");
+							System.out.println("Log in successfully!");
+							Manager manager = new Manager("admin");
+							manager.menu();
 							break;
 						}
 						else{
 							System.out.println("Incorrect username or password. Please try again.");
 						}
 	    			}
-	    			Manager manager = new Manager("admin");
-					manager.menu();
 					break;
 				}
 				if (role.equals("q")) {
@@ -109,9 +93,8 @@ public class Main{
 					System.out.println("Incorrect input.");
 				}
 			}
+			reader.close();
 		}
-
 		System.exit(0);
->>>>>>> 7392c7982412aec67a8143895ab62a8684cec040
 	}
 }

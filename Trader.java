@@ -389,7 +389,7 @@ public class Trader
 		while(true){
 		
 			Scanner reader = new Scanner(System.in);
-			System.out.println("Welcome to the Trader Interface!");
+			System.out.println("----------Welcome to the Trader Interface!----------");
 			System.out.println("Do you wish to: ");
 			System.out.println("(1) Make a Deposit");
 			System.out.println("(2) Make a Withdrawal");
