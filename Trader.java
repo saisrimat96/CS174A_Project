@@ -127,34 +127,43 @@ public class Trader
 		try
 		{
 			double trans = amount;
+			double temp = 0.0;
 			connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
-				double temp = rs.getDouble(1);
+				temp = rs.getDouble(1);
 				System.out.println("Your Current Balance before Withdrawal: " + temp);
 				amount = temp - trans;
 			}
 			rs.close();
 			stmt.close();
 
-			String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+			if(amount < 0)
+			{
+				System.out.println("I'm very sorry, but you do not have enough money in your account to make this withdrawal");
+			}
+			else
+			{
+				String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+				
+
+
+				PreparedStatement myQuery = connection.prepareStatement(QUERY1);
+				myQuery.setDouble(1, amount);
+				myQuery.setInt(2, taxid);
+		        myQuery.executeUpdate();
+		        myQuery.close();
+		        
+		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit', -" + trans + ",NULL,NULL," + taxid + ");";
+		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+		        myQuery1.executeUpdate();
+		        myQuery1.close();
+		        connection.close();
+
+		        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
+			}
 			
-
-
-			PreparedStatement myQuery = connection.prepareStatement(QUERY1);
-			myQuery.setDouble(1, amount);
-			myQuery.setInt(2, taxid);
-	        myQuery.executeUpdate();
-	        myQuery.close();
-	        
-	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit', -" + trans + ",NULL,NULL," + taxid + ");";
-	        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
-	        myQuery1.executeUpdate();
-	        myQuery1.close();
-	        connection.close();
-
-	        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
 
 	    }
 	    catch(SQLException e)
@@ -258,7 +267,8 @@ public class Trader
 		{
 			Class.forName("com.mysql.jdbc.Driver");
 		} 
-		catch(ClassNotFoundException e){
+		catch(ClassNotFoundException e)
+		{
 			e.printStackTrace();
 		}
 
@@ -300,7 +310,8 @@ public class Trader
 			connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM Transactions WHERE taxId=" + taxid);
-			if(rs.next()){
+			System.out.println("Trans History for: " + name);
+			while(rs.next()){
 				int t1 = rs.getInt("transactionsId");
 				String t2 = rs.getString("date");
 				String t3 = rs.getString("type");
@@ -308,7 +319,6 @@ public class Trader
 				int t5 = rs.getInt("numShares");
 				int t6 = rs.getInt("stockId");
 				int t7 = rs.getInt("taxId");
-				System.out.println("Trans History for: " + name);
 				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", stockId: " + t6 + ", taxId: " + t7);
 
 			}
@@ -378,11 +388,132 @@ public class Trader
 	    }
 	}
 	
+	//Shows information about movie. Function takes in string: Movie Title
+	public void Movie(String title)
+	{
+		Connection connection = null;
+	    
 
-	// public void Movie()
-	// {
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
 
-	// }
+		try
+		{
+			connection=DriverManager.getConnection("jdbc:mysql://cs174a.engr.ucsb.edu:3306/moviesDB",USER,PWD);
+			String query = "SELECT title, rating, production_year FROM Movies WHERE title=?";
+			PreparedStatement myquery = connection.prepareStatement(query);
+			myquery.setString(1, title);
+			ResultSet rs = myquery.executeQuery();
+			if(rs.next()){
+				String name = rs.getString("title");
+				double rate = rs.getDouble("rating");
+				int year = rs.getInt("production_year");
+				
+				System.out.println("Here is the information you requested: ");
+				System.out.println("Movie title: " + name);
+				System.out.println("Movie rating: " + rate);
+				System.out.println("Movie production year: " + year);
+			}
+			rs.close();
+			myquery.close();
+			connection.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+
+	}
+
+	//Select movies that were rated five stars between certain number of years
+	public void topMovie(int start, int end)
+	{
+		Connection connection = null;
+	    
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			connection=DriverManager.getConnection("jdbc:mysql://cs174a.engr.ucsb.edu:3306/moviesDB",USER,PWD);
+			String query = "SELECT title, production_year FROM Movies WHERE production_year >= ? AND production_year <= ? AND rating=5.0";
+			PreparedStatement myquery = connection.prepareStatement(query);
+			myquery.setInt(1, start);
+			myquery.setInt(2, end);
+			ResultSet rs = myquery.executeQuery();
+			if(rs.next()){
+				String name = rs.getString("title");
+				int year = rs.getInt("production_year");
+				
+				System.out.println("--------Movies that were rated 5.0 between years of " + start + " and " + end + "--------");
+				System.out.println("Title: " + name);
+				System.out.println("Production year: " + year);
+			}
+			else
+			{
+				System.out.println("I'm sorry, there are no top movies in the years specified.");
+			}
+			rs.close();
+			myquery.close();
+			connection.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+	}
+
+	//Find reviews for a particular movie. Takes String input.
+	public void reviews(String title)
+	{
+		Connection connection = null;
+	    
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			connection=DriverManager.getConnection("jdbc:mysql://cs174a.engr.ucsb.edu:3306/moviesDB",USER,PWD);
+			String query = "SELECT author, review FROM Movies, Reviews WHERE title=? and Movies.id = Reviews.movie_id";
+			PreparedStatement myquery = connection.prepareStatement(query);
+			myquery.setString(1, title);
+			ResultSet rs = myquery.executeQuery();
+			System.out.println("Here are reviews for the movie: " + title);
+			while(rs.next()){
+				String author = rs.getString("author");
+				String review = rs.getString("review");
+				System.out.println("Author: " + author + " said " + review);
+			}
+			rs.close();
+			myquery.close();
+			connection.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+
+	}
+
+
 
 	public void menu() 
 	{
@@ -395,7 +526,9 @@ public class Trader
 			System.out.println("(2) Make a Withdrawal");
 			System.out.println("(3) Buy Stocks");
 			System.out.println("(4) Sell Stocks");
-			System.out.println("(5) Show balance of your Market Account");
+			System.out.println("(5) View balance of your Market Account");
+			System.out.println("(6) View your transactions");
+			System.out.println("(7) Movie information");
 		  	String answer = reader.nextLine();
 
 		  	switch(answer){
@@ -408,14 +541,92 @@ public class Trader
 		  				temp = reader.nextLine();
 		  				amount = Double.parseDouble(temp);
 		  				Deposit(taxid, amount);
+		  				break;
 		  			}
 		  			else{
 		  				Deposit(taxid, amount);
+		  				break;
 		  			}
-		  		// case "2":
-		  		// 	Withdrawal();
-		  		// case "3":
-		  		// 	Buy();
+
+		  		case "2":
+		  			System.out.println("How much money would you like to withdraw?");
+		  			temp = reader.nextLine();
+		  			amount = Double.parseDouble(temp);
+		  			if(amount < 0){
+		  				System.out.println("Please provide a dollar amount greater than 0");
+		  				temp = reader.nextLine();
+		  				amount = Double.parseDouble(temp);
+		  				Withdrawal(taxid, amount);
+		  				break;
+		  			}
+		  			else{
+		  				Withdrawal(taxid, amount);
+		  				break;
+		  			}
+
+		  		case "3":
+		  			System.out.println("Please input the symbol you desire to purchase: ");
+		  			String sym= reader.nextLine();
+		  			System.out.println("Next...How many shares do you wish to purchase?: ");
+		  			temp = reader.nextLine();
+		  			int amt = Integer.parseInt(temp);
+		  			if(amt < 0){
+		  				System.out.println("Please provide a number greater than 0");
+		  				temp = reader.nextLine();
+		  				amt = Integer.parseInt(temp);
+		  				Buy(taxid, amt, sym);
+		  				break;
+		  			}
+		  			else{
+		  				Buy(taxid, amt, sym);
+		  				break;
+		  			}
+
+		  		// case "4":
+		  		//
+		  		case "5":
+		  			showBalance();
+		  			break;
+
+		  		case "6":
+		  			showTransactions();
+		  			break;
+
+		  		case "7":
+		  			System.out.println("--------Movie Information--------");
+		  			System.out.println("Do you wish to view: ");
+		  			System.out.println("(1) View information about a specific movie?");
+		  			System.out.println("(2) Discover top rated movies");
+		  			System.out.println("(3) View movie reviews");
+		  			String ans = reader.nextLine();
+		  			if(ans.equals("1"))
+		  			{
+		  				System.out.println("Please input a movie title: ");
+		  				temp = reader.nextLine();
+		  				Movie(temp);
+		  				break;	
+		  			}
+		  			else if(ans.equals("2"))
+		  			{
+		  				System.out.println("Please input a start year: ");
+		  				String s = reader.nextLine();
+		  				int start = Integer.parseInt(s);
+		  				System.out.println("Please input an end year: ");
+		  				String e = reader.nextLine();
+		  				int end = Integer.parseInt(e);
+		  				topMovie(start,end);
+		  				break;
+		  			}
+		  			else if(ans.equals("3"))
+		  			{
+		  				System.out.println("Please input a movie title: ");
+		  				temp = reader.nextLine();
+		  				reviews(temp);
+		  				break;
+		  			}
+		  			break;
+
+
 		 		default:
 		 			System.out.println("The option you chose is not listed. Please provide a valid option");
 		 			break;
@@ -464,6 +675,7 @@ public class Trader
 		 //    {
 		 //    	e.printStackTrace();
 		 //    }
+		  	break;
 		}
 
     }

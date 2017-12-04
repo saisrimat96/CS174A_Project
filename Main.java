@@ -9,20 +9,6 @@ public class Main{
 	
 	public static void main(String [ ] args)
 	{
-<<<<<<< HEAD
-=======
-		// Trader trader = new Trader("Sai");
-
-		// trader.setUserName("srimat");
-	 //    trader.setPassword("1234");
-	 //    trader.setState("CA");
-	 //    trader.setPhone("6504549782");
-
-	 //    System.out.println("Name:"+ trader.name );
-	 //    System.out.println("Username:"+ trader.username );
-	 //    System.out.println("Password:" + trader.password );
-	 //    System.out.println("State:" + trader.state);
-	 //  	System.out.println("Phone:" + trader.phone);
 
 		System.out.println("Welcome to StarsRus Brokerage!");
 		System.out.println("Are you a trader or a manager? Enter t for trader and m for manager. Enter q to exit.");
@@ -71,7 +57,9 @@ public class Main{
 		        				System.out.println("Incorrect username or password. Please try again.");
 		        			}
 		        			else{
-		        				System.out.println("Log in successfully! Welcome to your Trader Portal!");
+		        				System.out.println("Log in successful! Welcome to your Trader Portal!");
+		        				Trader trader = new Trader(username);
+		        				trader.menu();
 		        				break;
 		        			}
 		    			}
@@ -79,9 +67,11 @@ public class Main{
 		    			{
 		    				e.printStackTrace();
 		    			}
+		    			
+		    			
 	    			}
-					Trader trader = new Trader(username);
-					break;
+					
+					// break;
 				}
 				if (role.equals("m")) {
 					while(true) {
@@ -90,7 +80,7 @@ public class Main{
 						System.out.println("Enter your password.");
 						String password = reader.nextLine();
 						if(username.equals("admin") && password.equals("secret")) {
-							System.out.println("Log in successfully! Welcome to your Manager Portal!");
+							System.out.println("Log in successful! Welcome to your Manager Portal!");
 							Manager manager = new Manager("admin");
 							manager.menu();
 							break;
@@ -111,6 +101,6 @@ public class Main{
 		}
 
 		System.exit(0);
->>>>>>> 7392c7982412aec67a8143895ab62a8684cec040
+
 	}
 }
