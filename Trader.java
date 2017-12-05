@@ -555,7 +555,10 @@ public class Trader
 		
 			Scanner reader = new Scanner(System.in);
 			System.out.println("----------Welcome to the Trader Interface!----------");
+
 			System.out.println("\nDo you wish to: ");
+
+
 			System.out.println("(1) Make a Deposit");
 			System.out.println("(2) Make a Withdrawal");
 			System.out.println("(3) Buy Stocks");
