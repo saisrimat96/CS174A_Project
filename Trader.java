@@ -53,7 +53,6 @@ public class Trader
 		{
 			System.out.println(e);
 		}
-
 	}
 
 	//Make Deposit: Takes in taxid and amount one wishes to deposit
@@ -73,12 +72,13 @@ public class Trader
 		try
 		{
 			double trans = amount;
+			double temp = 0.0;
 			connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
-				double temp = rs.getDouble(1);
-				System.out.println("Your Current Balance before Deposit: " + temp);
+				temp = rs.getDouble(1);
+				System.out.println("\nYour Current Balance before Deposit: " + temp);
 				amount += temp;
 			}
 			rs.close();
@@ -94,13 +94,13 @@ public class Trader
 	        myQuery.executeUpdate();
 	        myQuery.close();
 	        
-	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit'," + trans + ",NULL,NULL," + taxid + ");";
+	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Deposit'," + trans + ",NULL,NULL," + taxid + "," + temp + ");";
 	        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
 	        myQuery1.executeUpdate();
 	        myQuery1.close();
 	        connection.close();
 
-	        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
+	        System.out.println("\nYour transaction was a success! New Current Balance is: " + amount);
 
 	    }
 	    catch(SQLException e)
@@ -133,7 +133,7 @@ public class Trader
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
 				temp = rs.getDouble(1);
-				System.out.println("Your Current Balance before Withdrawal: " + temp);
+				System.out.println("\nYour Current Balance before Withdrawal: " + temp);
 				amount = temp - trans;
 			}
 			rs.close();
@@ -141,7 +141,7 @@ public class Trader
 
 			if(amount < 0)
 			{
-				System.out.println("I'm very sorry, but you do not have enough money in your account to make this withdrawal");
+				System.out.println("\nI'm very sorry, but you do not have enough money in your account to make this withdrawal");
 			}
 			else
 			{
@@ -155,13 +155,13 @@ public class Trader
 		        myQuery.executeUpdate();
 		        myQuery.close();
 		        
-		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Deposit', -" + trans + ",NULL,NULL," + taxid + ");";
+		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Withdrawal', -" + trans + ",NULL,NULL," + taxid + ","+ temp + ");";
 		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
 		        myQuery1.executeUpdate();
 		        myQuery1.close();
 		        connection.close();
 
-		        System.out.println("Your transaction was a success! New Current Balance is: " + amount);
+		        System.out.println("\nYour transaction was a success! New Current Balance is: " + amount);
 			}
 			
 
@@ -214,7 +214,7 @@ public class Trader
 
 			if(pre_balance < total_buy)
 			{
-				System.out.println("I'm sorry, but you do not have enough money to purchase these stocks.");
+				System.out.println("\nI'm sorry, but you do not have enough money to purchase these stocks.");
 			}
 			else
 			{
@@ -227,16 +227,18 @@ public class Trader
 		        myQuery.executeUpdate();
 		        myQuery.close();
 		        
-		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `stockId`, `taxId`) VALUES (NULL, NULL,'Buy', -?, ?, NULL, ?);";
+		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Buy', -?, ?, ?, ?, ?);";
 		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
 		        myQuery1.setDouble(1,total_buy);
 		        myQuery1.setInt(2,numShares);
-		        myQuery1.setInt(3, taxid);
+		        myQuery1.setString(3, symbol);
+		        myQuery1.setInt(4, taxid);
+		        myQuery1.setDouble(5, pre_balance);
 		        myQuery1.executeUpdate();
 		        myQuery1.close();
 		        connection.close();
 
-		        System.out.println("Thank you! You have purchased:  ");
+		        System.out.println("\nThank you! You have purchased:  ");
 		        System.out.println(numShares + " shares of " + symbol);
 		        System.out.println("Total cost of transaction: " + total_buy);
 			}
@@ -247,16 +249,52 @@ public class Trader
 	    {
 	    	e.printStackTrace();
 	    }
-
 	}
-	/*
-
-	public void Sell()
+	
+	//Sell stock. Takes in taxid, number of shares, and stock symbol
+	public void Sell(int taxid, int numShares, String symbol)
 	{
-		
+		int value = 20;
+		double prev_price = 0.0;
+		double curr_price = 0.0;
+
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		} 
+		catch(ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Statement stmt=connection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT purchase_price FROM Stock_Accounts WHERE taxId=" + taxid + "and symbol="+symbol+");");
+			while(rs.next())
+			{
+				prev_price = rs.getDouble(1);
+			}
+
+			String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
+			PreparedStatement query = connection.prepareStatement(QUERY);
+			query.setString(1, symbol);
+			rs = query.executeQuery();
+
+			if(rs.next()){
+				curr_price = rs.getDouble(1);
+			}
+
+			
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+
 	}
 
-*/	
 	//Show's current balance in trader's market account
 	public void showBalance()
 	{
@@ -279,7 +317,7 @@ public class Trader
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
 				double temp = rs.getDouble(1);
-				System.out.println("Your Current Balance is: " + temp);
+				System.out.println("\nYour Current Balance is: " + temp);
 			}
 			rs.close();
 			stmt.close();
@@ -310,7 +348,7 @@ public class Trader
 			connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM Transactions WHERE taxId=" + taxid);
-			System.out.println("Trans History for: " + name);
+			System.out.println("\nTrans History for: " + name);
 			while(rs.next()){
 				int t1 = rs.getInt("transactionsId");
 				String t2 = rs.getString("date");
@@ -319,7 +357,7 @@ public class Trader
 				int t5 = rs.getInt("numShares");
 				int t6 = rs.getInt("stockId");
 				int t7 = rs.getInt("taxId");
-				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", stockId: " + t6 + ", taxId: " + t7);
+				System.out.println("\ntransactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", stockId: " + t6 + ", taxId: " + t7);
 
 			}
 			rs.close();
@@ -357,7 +395,7 @@ public class Trader
 			if(rs.next()){
 				String sym = rs.getString(1);
 				String curr = rs.getString(2);
-				System.out.println("Stock: " + sym + " ; Current Price: " + curr);
+				System.out.println("\nStock: " + sym + " ; Current Price: " + curr);
 			}
 			rs.close();
 			myquery.close();
@@ -373,8 +411,8 @@ public class Trader
 				String role = rs2.getString(2);
 				String dob = rs2.getString(3);
 				System.out.println();
-				System.out.println("Actor/Director Profile:-------");
-				System.out.println("Name: " + name);
+				System.out.println("\nActor/Director Profile:-------");
+				System.out.println("\nName: " + name);
 				System.out.println("Role: " + role);
 				System.out.println("Birthday: " + dob);
 			}
@@ -415,8 +453,8 @@ public class Trader
 				double rate = rs.getDouble("rating");
 				int year = rs.getInt("production_year");
 				
-				System.out.println("Here is the information you requested: ");
-				System.out.println("Movie title: " + name);
+				System.out.println("\nHere is the information you requested: ");
+				System.out.println("\nMovie title: " + name);
 				System.out.println("Movie rating: " + rate);
 				System.out.println("Movie production year: " + year);
 			}
@@ -428,7 +466,6 @@ public class Trader
 	    {
 	    	e.printStackTrace();
 	    }
-
 	}
 
 	//Select movies that were rated five stars between certain number of years
@@ -457,13 +494,13 @@ public class Trader
 				String name = rs.getString("title");
 				int year = rs.getInt("production_year");
 				
-				System.out.println("--------Movies that were rated 5.0 between years of " + start + " and " + end + "--------");
-				System.out.println("Title: " + name);
+				System.out.println("\n--------Movies that were rated 5.0 between years of " + start + " and " + end + "--------");
+				System.out.println("\nTitle: " + name);
 				System.out.println("Production year: " + year);
 			}
 			else
 			{
-				System.out.println("I'm sorry, there are no top movies in the years specified.");
+				System.out.println("\nI'm sorry, there are no top movies in the years specified.");
 			}
 			rs.close();
 			myquery.close();
@@ -496,7 +533,7 @@ public class Trader
 			PreparedStatement myquery = connection.prepareStatement(query);
 			myquery.setString(1, title);
 			ResultSet rs = myquery.executeQuery();
-			System.out.println("Here are reviews for the movie: " + title);
+			System.out.println("\nHere are reviews for the movie: " + title);
 			while(rs.next()){
 				String author = rs.getString("author");
 				String review = rs.getString("review");
@@ -510,18 +547,15 @@ public class Trader
 	    {
 	    	e.printStackTrace();
 	    }
-
 	}
-
-
 
 	public void menu() 
 	{
 		while(true){
 		
 			Scanner reader = new Scanner(System.in);
-			System.out.println("Welcome to the Trader Interface!");
-			System.out.println("Do you wish to: ");
+			System.out.println("----------Welcome to the Trader Interface!----------");
+			System.out.println("\nDo you wish to: ");
 			System.out.println("(1) Make a Deposit");
 			System.out.println("(2) Make a Withdrawal");
 			System.out.println("(3) Buy Stocks");
@@ -529,27 +563,28 @@ public class Trader
 			System.out.println("(5) View balance of your Market Account");
 			System.out.println("(6) View your transactions");
 			System.out.println("(7) Movie information");
+			System.out.println("or 'q' to exit");
 		  	String answer = reader.nextLine();
 
 		  	switch(answer){
 		  		case "1":
-		  			System.out.println("How much money would you like to deposit?");
+		  			System.out.println("\nHow much money would you like to deposit?");
 		  			String temp = reader.nextLine();
 		  			Double amount = Double.parseDouble(temp);
 		  			if(amount < 0){
 		  				System.out.println("Please provide a dollar amount greater than 0");
 		  				temp = reader.nextLine();
 		  				amount = Double.parseDouble(temp);
-		  				Deposit(taxid, amount);
-		  				break;
+		  				Deposit(taxid, amount);	
+		  				break;	
 		  			}
 		  			else{
 		  				Deposit(taxid, amount);
-		  				break;
+		  				break;	  				
 		  			}
 
 		  		case "2":
-		  			System.out.println("How much money would you like to withdraw?");
+		  			System.out.println("\nHow much money would you like to withdraw?");
 		  			temp = reader.nextLine();
 		  			amount = Double.parseDouble(temp);
 		  			if(amount < 0){
@@ -557,15 +592,16 @@ public class Trader
 		  				temp = reader.nextLine();
 		  				amount = Double.parseDouble(temp);
 		  				Withdrawal(taxid, amount);
-		  				break;
+		  				break;		  				
 		  			}
 		  			else{
 		  				Withdrawal(taxid, amount);
 		  				break;
 		  			}
+		  			
 
 		  		case "3":
-		  			System.out.println("Please input the symbol you desire to purchase: ");
+		  			System.out.println("\nPlease input the symbol you desire to purchase: ");
 		  			String sym= reader.nextLine();
 		  			System.out.println("Next...How many shares do you wish to purchase?: ");
 		  			temp = reader.nextLine();
@@ -579,18 +615,21 @@ public class Trader
 		  			}
 		  			else{
 		  				Buy(taxid, amt, sym);
-		  				break;
+		  				break;	
 		  			}
+		  			
 
 		  		// case "4":
 		  		//
 		  		case "5":
 		  			showBalance();
 		  			break;
+		  			
 
 		  		case "6":
 		  			showTransactions();
 		  			break;
+		  			
 
 		  		case "7":
 		  			System.out.println("--------Movie Information--------");
@@ -604,7 +643,7 @@ public class Trader
 		  				System.out.println("Please input a movie title: ");
 		  				temp = reader.nextLine();
 		  				Movie(temp);
-		  				break;	
+		  				break;
 		  			}
 		  			else if(ans.equals("2"))
 		  			{
@@ -624,7 +663,10 @@ public class Trader
 		  				reviews(temp);
 		  				break;
 		  			}
-		  			break;
+
+				case "q":
+					System.out.println("\nHave a nice day!");
+					System.exit(0);
 
 
 		 		default:
@@ -632,50 +674,21 @@ public class Trader
 		 			break;
 		  	}
 
-			// Scanner reader = new Scanner(System.in);
-			// String []inputs = new String[2];
-			// System.out.println("Welcome! Please provide a valid username: ");
-		 //  	inputs[0] = reader.nextLine();
-		 //  	System.out.println("and now a valid password: ");
-			// inputs[1] = reader.nextLine();
-			// String username = inputs[0];
-			// String password = inputs[1];
-			// System.out.println(username + " " + password);
-
-			// Connection connection = null;
-		 //    Statement statement = null;
-
-			// try{
-			// 	Class.forName("com.mysql.jdbc.Driver");
-			// } 
-			// catch(ClassNotFoundException e){
-			// 	e.printStackTrace();
-			// }
-			
-			// try{
-			// 	connection=DriverManager.getConnection(HOST,USER,PWD);
-			// 	String QUERY = "select username, password from Customer_Profile where username=? and password=?";
-
-			// 	PreparedStatement myQuery = connection.prepareStatement(QUERY);
-			// 	myQuery.setString(1, username);
-			// 	myQuery.setString(2, password);
-		 //        ResultSet resultSet = myQuery.executeQuery();
-		 //        boolean empty = true;
-		 //        while (resultSet.next()) {
-		 //         	empty = false;
-		 //            }
-		 //        if(empty){
-		 //        	System.out.println("Incorrect username or password. Please try again.");
-		 //        }
-		 //        else{
-		 //        	System.out.println("Login successful! Welcome to your Trader Portal!");
-		 //        }
-		 //    }
-		 //    catch(SQLException e)
-		 //    {
-		 //    	e.printStackTrace();
-		 //    }
-		  	break;
+		  	while(true) {
+		  				System.out.println("Do you wish to go back to Trader Menu? Enter 'y' for yes or 'q' to exit Manager Interface.");
+		  				String answer2 = reader.nextLine();
+		  				if(answer2.equals("q")) {
+		  					System.exit(0);
+		  				}
+		  				else if(answer2.equals("y")) {
+		  					break;
+		  				}
+		  				else{
+		  					System.out.println("The option you chose is not listed. Please provide a valid option.");
+		  				}
+		  			}
+		
+		  	
 		}
 
     }
