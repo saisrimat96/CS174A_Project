@@ -23,7 +23,6 @@ public class Market{
 		{
 			System.out.println(e);
 		}
-		System.out.println("imhere2");
 		updateDate(date);
 	}
 
