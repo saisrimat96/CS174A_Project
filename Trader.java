@@ -2,10 +2,14 @@
 
 Sai Srimat, Ziheng Song: Trader Class
 
+
 */
 
 import java.sql.*;
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class Trader
@@ -17,6 +21,7 @@ public class Trader
 	String phone;
 	String email;
 	int taxid;
+	String date;
 	public static final String HOST = "jdbc:mysql://cs174a.engr.ucsb.edu:3306/srimatDB";
     public static final String USER = "srimat";
     public static final String PWD = "504";
@@ -45,7 +50,20 @@ public class Trader
         		email = rs.getString("Email");
         		taxid = rs.getInt("taxId");
         	}
+
         	stmt.close();
+
+        	String query2 = "select today_date from Customer_Profile where username = ?";
+        	PreparedStatement stmt2 = con.prepareStatement(query2);
+        	stmt2.setString(1, "admin");
+        	rs = stmt2.executeQuery();
+        	if(rs.next())
+        	{
+        		date = rs.getString("today_date");
+        	}
+        	
+        	stmt2.close();
+  			rs.close();
         	con.close();
 		}
 		catch(Exception e)
@@ -92,14 +110,17 @@ public class Trader
 			myQuery.setInt(2, taxid);
 	        myQuery.executeUpdate();
 	        myQuery.close();
+
 	        
-	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Deposit'," + trans + ",NULL,NULL," + taxid + "," + temp + ");";
+	        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`,`new_balance`,`earnings`) VALUES (NULL,? ,'Deposit'," + trans + ",NULL,NULL," + taxid + "," + temp + ","+ amount + ",NULL);";
 	        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+	        myQuery1.setString(1,date);
 	        myQuery1.executeUpdate();
 	        myQuery1.close();
 	        connection.close();
 
 	        System.out.println("\nYour transaction was a success! New Current Balance is: " + amount);
+
 
 	    }
 	    catch(SQLException e)
@@ -154,8 +175,9 @@ public class Trader
 		        myQuery.executeUpdate();
 		        myQuery.close();
 		        
-		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Withdrawal', -" + trans + ",NULL,NULL," + taxid + ","+ temp + ");";
+		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Withdrawal', -" + trans + ",NULL,NULL," + taxid + ","+ temp + ","+amount+",NULL);";
 		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+		        myQuery1.setString(1, date);
 		        myQuery1.executeUpdate();
 		        myQuery1.close();
 		        connection.close();
@@ -216,9 +238,58 @@ public class Trader
 				System.out.println("\nI'm sorry, but you do not have enough money to purchase these stocks.");
 			}
 			else
-			{
-				String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+			{	
+				QUERY = "SELECT account_id FROM Stock_Accounts WHERE symbol=? AND purchase_price = ? AND taxId = ?";
+				query = connection.prepareStatement(QUERY);
+				query.setString(1, symbol);
+				query.setDouble(2, current_stock);
+				query.setInt(3, taxid);
+				rs = query.executeQuery();
+				boolean empty = true;
+				while (rs.next()) 
+				{
+					empty = false;
+				}
+				if(empty)
+				{
+					String QUERY4 = "INSERT INTO `Stock_Accounts` (`account_id`, `taxId`, `balance`, `symbol`, `purchase_price`) VALUES (NULL, ?, ?, ?, ?);";
+					PreparedStatement myQuery4 = connection.prepareStatement(QUERY4);
+					myQuery4.setInt(1, taxid);
+					myQuery4.setDouble(2, numShares);
+					myQuery4.setString(3, symbol);
+					myQuery4.setDouble(4, current_stock);
+					myQuery4.executeUpdate();
+					myQuery4.close();
+				}
+				else
+				{	
+					String QUERY5 = "update Stock_Accounts set balance = balance + ? where taxId = ? and purchase_price = ?";
+					PreparedStatement myQuery5 = connection.prepareStatement(QUERY5);
+					myQuery5.setInt(1, numShares);
+					myQuery5.setInt(2, taxid);
+					myQuery5.setDouble(3, current_stock);
+					myQuery5.executeUpdate();
+					myQuery5.close();
+						
+				}
+				query.close();
+
 				double post_balance = pre_balance - total_buy;
+
+				String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Buy', -?, ?, ?, ?, ?,?,NULL);";
+		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+		        myQuery1.setString(1, date);
+		        myQuery1.setDouble(2,total_buy);
+		        myQuery1.setInt(3,numShares);
+		        myQuery1.setString(4, symbol);
+		        myQuery1.setInt(5, taxid);
+		        myQuery1.setDouble(6, pre_balance);
+		        myQuery1.setDouble(7, post_balance);
+		        myQuery1.executeUpdate();
+		        myQuery1.close();
+
+				String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+				
 
 				PreparedStatement myQuery = connection.prepareStatement(QUERY1);
 				myQuery.setDouble(1, post_balance);
@@ -226,15 +297,10 @@ public class Trader
 		        myQuery.executeUpdate();
 		        myQuery.close();
 		        
-		        String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`) VALUES (NULL, NULL,'Buy', -?, ?, ?, ?, ?);";
-		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
-		        myQuery1.setDouble(1,total_buy);
-		        myQuery1.setInt(2,numShares);
-		        myQuery1.setString(3, symbol);
-		        myQuery1.setInt(4, taxid);
-		        myQuery1.setDouble(5, pre_balance);
-		        myQuery1.executeUpdate();
-		        myQuery1.close();
+		        
+
+
+
 		        connection.close();
 
 		        System.out.println("\nThank you! You have purchased:  ");
@@ -251,12 +317,21 @@ public class Trader
 	}
 	
 	//Sell stock. Takes in taxid, number of shares, and stock symbol
-	public void Sell(int taxid, int numShares, String symbol)
+	public void Sell(int taxid, int numShares,String symbol)
 	{
+
+		Scanner reader = new Scanner(System.in);
+		double prev_balance = 0.0;
 		int value = 20;
-		double prev_price = 0.0;
+		double prev_price1 = 0.0;
+		double prev_price2 = 0.0;
 		double curr_price = 0.0;
-		Connection connection = null;
+		int temp_1 = 0;
+		int temp_2 = 0;
+		int amt_1 = 0;
+		int amt_2 = 0;
+		double earnings = 0.0;
+		double new_balance = 0.0;
 
 		try
 		{
@@ -269,13 +344,15 @@ public class Trader
 
 		try
 		{
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			Connection connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT purchase_price FROM Stock_Accounts WHERE taxId=" + taxid + "and symbol="+symbol+");");
-			while(rs.next())
-			{
-				prev_price = rs.getDouble(1);
+
+			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			if(rs.next()){
+				prev_balance = rs.getDouble(1);	
 			}
+			
+			stmt.close();
 
 			String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
 			PreparedStatement query = connection.prepareStatement(QUERY);
@@ -284,15 +361,120 @@ public class Trader
 
 			if(rs.next()){
 				curr_price = rs.getDouble(1);
+				System.out.println("Current price of stock is: " + curr_price);
+			}
+			query.close();
+
+			System.out.println("\nYou purchased: ");
+
+			String query_stock = "SELECT balance, purchase_price FROM Stock_Accounts WHERE taxId=? and symbol=?;";
+			PreparedStatement q_stock = connection.prepareStatement(query_stock);
+			q_stock.setInt(1, taxid);
+			q_stock.setString(2, symbol);
+			rs = q_stock.executeQuery();
+			ArrayList<Integer> balance = new ArrayList<Integer>();
+			ArrayList<Double> price = new ArrayList<Double>();
+			ArrayList<Integer> amt = new ArrayList<Integer>();
+
+			while(rs.next())
+			{
+				balance.add(rs.getInt(1));
+				price.add(rs.getDouble(2));
 			}
 
+			for(int i = 0; i < balance.size(); i++)
+			{	
+				Integer temp = balance.get(i);
+				Double prev_price = price.get(i);
+				System.out.println(temp + " shares at " + prev_price);
+				System.out.println("\nHow many of this would you like to sell?");
+				String t1 = reader.nextLine();
+				Integer amt1 = Integer.parseInt(t1);
+				if(amt1 > balance.get(i))
+				{
+					System.out.println("I'm sorry but you do not have enough shares to sell, please try again");
+					break;
+				}
+				else{
+					amt.add(amt1);
+				}				
+				
+			}
+
+			Integer sum = 0;
+			for(int i = 0; i<amt.size(); i++)
+			{
+				sum+=amt.get(i);
+			}
+
+			if(sum != numShares)
+			{
+				System.out.println("\nI'm sorry, the total shares inputted does not match the desired number of shares");
+			}
+			else{
+
+			q_stock.close();
+			rs.close();
+			
+			for(int i = 0; i < amt.size(); i++)
+			{
+				double temp1 = ((curr_price - price.get(i)) * amt.get(i));
+				double temp2 = (curr_price * amt.get(i));
+				new_balance += temp2;
+				earnings += temp1;
+			}
+			//earnings = (((curr_price-prev_price1) * amt_1) + ((curr_price-prev_price2) * amt_2));
+			
+			//double new_balance = (curr_price * amt_1) + (curr_price * amt_2) - value;
+
+			new_balance = new_balance - 20;
+
+			double total_buy = prev_balance + new_balance;
+
+			String trans = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`,`new_balance`, `earnings`) VALUES (NULL, ?,'Sell', ?, ?, ?, ?, ?,?,?);";
+			PreparedStatement myQuery1 = connection.prepareStatement(trans);
+		    myQuery1.setString(1, date);
+		    myQuery1.setDouble(2, new_balance);
+		    myQuery1.setInt(3,numShares);
+		    myQuery1.setString(4, symbol);
+		    myQuery1.setInt(5, taxid);
+		    myQuery1.setDouble(6, prev_balance);
+		    myQuery1.setDouble(7, new_balance);
+		    myQuery1.setDouble(8, earnings);
+		    myQuery1.executeUpdate();
+		    myQuery1.close();
+			
+
+		    String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+			
+
+			PreparedStatement myQuery = connection.prepareStatement(QUERY1);
+			myQuery.setDouble(1, total_buy);
+			myQuery.setInt(2, taxid);
+		    myQuery.executeUpdate();
+		    myQuery.close();
+			
+		    String QUERY2 = "update Stock_Accounts set balance = ? where taxId = ? and purchase_price = ?";
+		    PreparedStatement myQuery2 = connection.prepareStatement(QUERY2);
+			for(int i = 0; i < balance.size(); i++){		
+				myQuery2.setInt(1, balance.get(i)-amt.get(i));
+				myQuery2.setInt(2, taxid);
+				myQuery2.setDouble(3, price.get(i));
+				myQuery2.executeUpdate();
+				
+			}
+			myQuery2.close();
+
+			System.out.println("Sell was a success! Total profit is: " + total_buy);
+
+			connection.close();
+		}
 			
 		}
 		catch(SQLException e)
 	    {
 	    	e.printStackTrace();
 	    }
-
 	}
 
 	//Show's current balance in trader's market account
@@ -355,9 +537,12 @@ public class Trader
 				String t3 = rs.getString("type");
 				Double t4 = rs.getDouble("amount");
 				int t5 = rs.getInt("numShares");
-				int t6 = rs.getInt("stockId");
+				String t6 = rs.getString("symbol");
 				int t7 = rs.getInt("taxId");
-				System.out.println("\ntransactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", stockId: " + t6 + ", taxId: " + t7);
+				Double t8 = rs.getDouble("prev_balance");
+				Double t9 = rs.getDouble("new_balance");
+
+				System.out.println("\ntransactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7 + ", prev_balance: " + t8 + ", new_balance: " + t9);
 
 			}
 			rs.close();
@@ -622,8 +807,25 @@ public class Trader
 		  			}
 		  			
 
-		  		// case "4":
-		  		//
+		  		case "4":
+		  			System.out.println("\nPlease input the symbol you desire to sell: ");
+		  			sym= reader.nextLine();
+		  			System.out.println("Next...How many shares do you wish to sell?: ");
+		  			temp = reader.nextLine();
+		  			amt = Integer.parseInt(temp);
+		  			if(amt < 0){
+		  				System.out.println("Please provide a number greater than 0");
+		  				temp = reader.nextLine();
+		  				amt = Integer.parseInt(temp);
+		  				Sell(taxid, amt, sym);
+		  				break;
+		  			}
+		  			else{
+		  				Sell(taxid, amt, sym);
+		  				break;	
+		  			}
+		  			
+		  		
 		  		case "5":
 		  			showBalance();
 		  			break;
