@@ -94,9 +94,9 @@ public class Main{
 								//Log into Manager Interface
 								if (role.equals("m")) {
 									while(true) {
-										System.out.println("Enter your username.");
+										System.out.println("Please provide a valid username:");
 										username = reader.nextLine();
-										System.out.println("Enter your password.");
+										System.out.println("and now a valid password: ");
 										password = reader.nextLine();
 										if(username.equals("admin") && password.equals("secret")) {
 											System.out.println("Log in successfully!");
