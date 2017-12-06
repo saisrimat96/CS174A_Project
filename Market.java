@@ -70,19 +70,6 @@ public class Market{
 		}
 	}
 
-	public boolean isOpen()
-	{
-		if(open == true)
-		{
-			return true;
-		}
-		if(open == false)
-		{
-			return false;
-		}
-		return true;
-	}
-
 	public void setMarketOpen()
 	{
 		open = true;

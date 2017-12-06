@@ -5,8 +5,7 @@ Sai Srimat, Ziheng Song: Manager Class
 */
 
 import java.sql.*;
-import java.util.Scanner;
-
+import java.util.*;
 
 public class Manager
 {
@@ -48,12 +47,101 @@ public class Manager
 	public void addInterest()
 	{
 		try
-		{
-			String query = "update Market_Accounts SET balance = (balance * 1.03)";
-        	PreparedStatement stmt = connection.prepareStatement(query);
-        	stmt.executeUpdate();
-        	System.out.println("You have added interest for all customers.");
-        	stmt.close();
+		{	
+			ArrayList<Integer> taxidArray = new ArrayList<Integer>();
+			Statement stmt0 = connection.createStatement();
+			ResultSet rs = stmt0.executeQuery("SELECT taxId FROM Customer_Profile");
+			while(rs.next()){
+				taxidArray.add(rs.getInt(1));
+			}
+			stmt0.close();
+			int taxid = 0;
+
+			//Loop through all customers
+			for (int n = 0; n < taxidArray.size(); n++){
+				taxid = taxidArray.get(n);
+				//Find initial balance
+				double initial_balance = 0.0;
+				Statement stmt = connection.createStatement();
+				rs = stmt.executeQuery("SELECT prev_balance FROM Transactions WHERE transactionsId = (select MIN(transactionsId) FROM Transactions WHERE taxId = " + taxid + ")");
+				if(rs.next()){
+					initial_balance = rs.getDouble(1);
+				}
+				stmt.close();
+
+				//Find final balance
+				double final_balance = 0.0;
+				Statement stmt2 = connection.createStatement();
+				rs = stmt2.executeQuery("SELECT new_balance FROM Transactions WHERE transactionsId = (select MAX(transactionsId) FROM Transactions WHERE taxId = " + taxid + ")");
+				if(rs.next()){
+					final_balance = rs.getDouble(1);
+				}
+				stmt2.close();
+
+				//Calculate the total earning/loss
+				double total = 0.0;
+				Statement stmt3 = connection.createStatement();
+				rs = stmt3.executeQuery("SELECT SUM(earnings) FROM Transactions WHERE taxId = " + taxid);
+				if(rs.next()){
+					total = rs.getDouble(1);
+				}
+				stmt3.close();
+
+				Statement stmt4 = connection.createStatement();
+				rs = stmt4.executeQuery("SELECT Transactions.date, Transactions.new_balance FROM Transactions INNER JOIN ( SELECT date, MAX(transactionsId) AS latest FROM Transactions WHERE taxId = " + taxid + " GROUP BY date) AS newgroup ON newgroup.date = Transactions.date AND newgroup.latest = Transactions.transactionsId");
+
+				ArrayList<String> dateArray = new ArrayList<String>();
+				ArrayList<Double> balanceArray = new ArrayList<Double>();
+				while(rs.next()){
+					dateArray.add(rs.getString(1));
+					balanceArray.add(rs.getDouble(2));
+				}
+				stmt4.close();
+				double new_initial_balance = initial_balance;
+
+				//Calculate the average daily balance
+				int startDate = 1;
+				double accrue_total = 0.0;
+				int nowDate = 0;
+				for (int i = 0; i < dateArray.size(); i++){
+					nowDate = Integer.parseInt(dateArray.get(i).substring(4,5));
+					accrue_total += new_initial_balance * (nowDate - startDate);
+					startDate = nowDate;
+					new_initial_balance = balanceArray.get(i);
+				}
+				accrue_total += final_balance * (30 - startDate);
+				double average = accrue_total / 30;
+				double accrue_interest = average * 1.03;
+
+				String query = "update Market_Accounts SET balance = (balance + " + accrue_interest + ") where taxId = " + taxid;
+	        	PreparedStatement stmt5 = connection.prepareStatement(query);
+	        	stmt5.executeUpdate();
+	        	stmt5.close();
+
+	        	//Get today's date to update transactions
+	        	String today_date = "";
+	        	Statement stmt6 = connection.createStatement();
+	        	rs = stmt6.executeQuery("select today_date FROM Customer_Profile WHERE name = 'John Admin'");
+				if(rs.next()){
+					today_date = rs.getString(1);
+				}
+				stmt6.close();
+				System.out.println(final_balance + " " + accrue_interest);
+
+	        	String query2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Interest', ?, NULL, NULL, ?, ?, ?, ?);";
+		        PreparedStatement stmt7 = connection.prepareStatement(query2);
+		        stmt7.setString(1, today_date);
+		        stmt7.setDouble(2, accrue_interest);
+		        stmt7.setInt(3, taxid);
+		       	stmt7.setDouble(4, initial_balance);
+		       	stmt7.setDouble(5, (final_balance + accrue_interest));
+		       	stmt7.setDouble(6, accrue_interest);
+		        stmt7.executeUpdate();
+		        stmt7.close();
+
+	        	rs.close();
+	        }
+	        System.out.println("You have added interest for all customers.");
 		}
 		catch(SQLException e)
 		{
@@ -91,9 +179,73 @@ public class Manager
 				System.out.println("Trans History for: " + name);
 				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7);
 			}
-
-			rs.close();
 			stmt2.close();
+
+			//Show initial balance
+			double initial_balance = 0.0;
+			Statement stmt3 = connection.createStatement();
+			rs = stmt3.executeQuery("SELECT prev_balance FROM Transactions WHERE transactionsId = (select MIN(transactionsId) FROM Transactions WHERE taxId = " + taxid + ")");
+			if(rs.next()){
+				initial_balance = rs.getDouble(1);
+				System.out.println("Initial balance: " + initial_balance);
+			}
+			stmt3.close();
+
+			//Show final balance
+			double final_balance = 0.0;
+			Statement stmt4 = connection.createStatement();
+			rs = stmt4.executeQuery("SELECT new_balance FROM Transactions WHERE transactionsId = (select MAX(transactionsId) FROM Transactions WHERE taxId = " + taxid + ")");
+			if(rs.next()){
+				final_balance = rs.getDouble(1);
+				System.out.println("Final balance: " + final_balance);
+			}
+			stmt4.close();
+
+			//Show the total earning/loss
+			double total = 0.0;
+			Statement stmt5 = connection.createStatement();
+			rs = stmt5.executeQuery("SELECT SUM(earnings) FROM Transactions WHERE taxId = " + taxid);
+			if(rs.next()){
+				total = rs.getDouble(1);
+			}
+			stmt5.close();
+
+			Statement stmt6 = connection.createStatement();
+			rs = stmt6.executeQuery("SELECT Transactions.date, Transactions.new_balance FROM Transactions INNER JOIN ( SELECT date, MAX(transactionsId) AS latest FROM Transactions WHERE taxId = " + taxid + " GROUP BY date) AS newgroup ON newgroup.date = Transactions.date AND newgroup.latest = Transactions.transactionsId");
+
+			ArrayList<String> dateArray = new ArrayList<String>();
+			ArrayList<Double> balanceArray = new ArrayList<Double>();
+			while(rs.next()){
+				dateArray.add(rs.getString(1));
+				balanceArray.add(rs.getDouble(2));
+			}
+			stmt6.close();
+			rs.close();
+
+			//Calculate the average daily balance
+			int startDate = 1;
+			double totalInterest = 0.0;
+			double balance = initial_balance;
+			int nowDate = 0;
+			for (int i = 0; i < dateArray.size(); i++){
+				nowDate = Integer.parseInt(dateArray.get(i).substring(4,5));
+				totalInterest += initial_balance * (nowDate - startDate);
+				startDate = nowDate;
+				initial_balance = balanceArray.get(i);
+			}
+			totalInterest += final_balance * (30 - startDate);
+			double average = totalInterest / 30;
+			double accrue_interest = average * 1.03;
+
+			//Calculate total earnings/loss (including interst)
+			total += accrue_interest;
+
+			if(total >= 0){
+				System.out.println("Total earnings: " + total);
+			}
+			else if(total < 0){
+				System.out.println("Total loss: " + (-1) * total);
+			}
 		}
 		catch(SQLException e)
 	    {
@@ -101,70 +253,48 @@ public class Manager
 	    }
 	}
 
-	// public void listActive()
-	// {
-	// 	Connection connection = null;
-	// 	int taxid = 0;
-	// 	try
-	// 	{
-	// 		Class.forName("com.mysql.jdbc.Driver");
-	// 	} 
-	// 	catch(ClassNotFoundException e){
-	// 		e.printStackTrace();
-	// 	}
+	public void listActive()
+	{
+		try
+		{
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery("select Customer_Profile.name, (select sum(Transactions.numShares) from Transactions where Transactions.taxId = Customer_Profile.taxId) as sharesSum from Customer_Profile group by taxId, sharesSum having sharesSum >= 1000");
+			while(rs.next()){
+				String name = rs.getString(1);
+				int shares_sum = rs.getInt(2);
+				System.out.println("Name: " + name + ", Total Shares traded: " + shares_sum);
+			}
+			rs.close();
+			stmt.close();
 
-	// 	try
-	// 	{
-	// 		//Find the taxId and email of a given customer name from Customer_Profile
-	// 		connection = DriverManager.getConnection(HOST,USER,PWD);
-	// 		Statement stmt = connection.createStatement();
-	// 		ResultSet rs = stmt.executeQuery("SELECT Email, taxId FROM Customer_Profile WHERE name = '" + name + "'");
-	// 		if(rs.next()){
-	// 			String email = rs.getString(1);
-	// 			taxid = rs.getInt(2);
-	// 			System.out.println("Name: " + name);
-	// 			System.out.println("Email: " + email);
-	// 		}
-	// 		rs.close();
-	// 		stmt.close();
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+	}
 
-	// 	}
-	// 	catch(SQLException e)
-	//     {
-	//     	e.printStackTrace();
-	//     }
+	public void genDTER()
+	{
+		try
+		{
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery("select Customer_Profile.name, Customer_Profile.STATE, (select sum(Transactions.earnings) from Transactions where Transactions.taxId = Customer_Profile.taxId) as earningsSum from Customer_Profile group by taxId, earningsSum having earningsSum >= 10000");
+			while(rs.next()){
+				String name = rs.getString(1);
+				String state = rs.getString(2);
+				double earnings_sum = rs.getDouble(3);
+				System.out.println("Name: " + name + ", State: " + state + ", Total Earnings: " + earnings_sum);
+			}
+			rs.close();
+			stmt.close();
 
-	// 	try
-	// 	{
-	//     	//List all transactions
-	// 		Statement stmt2 = connection.createStatement();
-	// 		ResultSet rs2 = stmt2.executeQuery("SELECT * FROM Transactions WHERE taxId=" + taxid);
-	// 		if(rs2.next()){
-	// 			int t1 = rs2.getInt("transactionsId");
-	// 			String t2 = rs2.getString("date");
-	// 			String t3 = rs2.getString("type");
-	// 			Double t4 = rs2.getDouble("amount");
-	// 			int t5 = rs2.getInt("numShares");
-	// 			int t6 = rs2.getInt("symbol");
-	// 			int t7 = rs2.getInt("taxId");
-	// 			System.out.println("Trans History for: " + name);
-	// 			System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7);
-	// 		}
-
-	// 		rs2.close();
-	// 		stmt2.close();
-	// 		connection.close();
-	// 	}
-	// 	catch(SQLException e)
-	//     {
-	//     	e.printStackTrace();
-	//     }
-	// }
-
-	// public void genDTER()
-	// {
-
-	// }
+		}
+		catch(SQLException e)
+	    {
+	    	e.printStackTrace();
+	    }
+	}
 
 	public void report(String name)
 	{
@@ -266,8 +396,9 @@ public class Manager
 		  			String name2 = reader.nextLine();
 		  			genStatement(name2);
 		  			break;
-		  		// case "3":
-		  		// 	listActive();
+		  		case "3":
+		  			listActive();
+		  			break;
 		  		// case "4":
 		  		// 	genDTER();
 		  		case "5":

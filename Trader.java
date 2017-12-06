@@ -4,7 +4,6 @@ Sai Srimat, Ziheng Song: Trader Class
 
 */
 
-
 import java.sql.*;
 import java.util.Scanner;
 
@@ -257,6 +256,7 @@ public class Trader
 		int value = 20;
 		double prev_price = 0.0;
 		double curr_price = 0.0;
+		Connection connection = null;
 
 		try
 		{
