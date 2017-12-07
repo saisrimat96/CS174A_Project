@@ -88,3 +88,31 @@ SKB,40.00,Kim Basinger,8 December 1958,L.A. Confidential,Actor,1997,5000000
 SMD,71.00,Michael Douglas,25 September 1944,A Perfect Murder,Actor,1998,10000000
 STC,32.50,Tom Cruise,3 July 1962,Jerry Maguire,Actor,1996,5000000
 
+INSERT INTO `Transactions` (`transactionsId`, `date`, `type`, `amount`, `numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`)
+VALUES
+	(135, '03/01/2013', 'Deposit', 10000, NULL, NULL, 456, 0, 10000, NULL),
+	(136, '03/01/2013', 'Deposit', 10000, NULL, NULL, 1022, 0, 10000, NULL),
+	(137, '03/01/2013', 'Deposit', 35000, NULL, NULL, 1123, 0, 35000, NULL),
+	(138, '03/01/2013', 'Deposit', 200000, NULL, NULL, 1234, 0, 200000, NULL),
+	(139, '03/01/2013', 'Deposit', 50000, NULL, NULL, 2034, 0, 50000, NULL),
+	(140, '03/01/2013', 'Deposit', 2000, NULL, NULL, 2341, 0, 2000, NULL),
+	(141, '03/01/2013', 'Deposit', 100000, NULL, NULL, 3045, 0, 100000, NULL),
+	(142, '03/01/2013', 'Deposit', 30500, NULL, NULL, 3306, 0, 30500, NULL),
+	(143, '03/01/2013', 'Deposit', 130200, NULL, NULL, 3455, 0, 130200, NULL),
+	(144, '03/01/2013', 'Deposit', 45000, NULL, NULL, 4093, 0, 45000, NULL),
+	(145, '03/01/2013', 'Deposit', 5000, NULL, NULL, 8956, 0, 5000, NULL);
+
+INSERT INTO `Market_Accounts` (`taxId`, `balance`)
+VALUES
+	(456, 10000),
+	(1022, 10000),
+	(1123, 35000),
+	(1234, 200000),
+	(2034, 50000),
+	(2341, 2000),
+	(3045, 100000),
+	(3306, 30500),
+	(3455, 130200),
+	(4093, 45000),
+	(8956, 5000);
+

@@ -52,6 +52,10 @@ public class Manager
 			Statement stmt0 = connection.createStatement();
 			ResultSet rs = stmt0.executeQuery("SELECT taxId FROM Customer_Profile");
 			while(rs.next()){
+				int check = rs.getInt(1);
+				if(check == 1000){
+					continue;
+				}
 				taxidArray.add(rs.getInt(1));
 			}
 			stmt0.close();
@@ -68,6 +72,7 @@ public class Manager
 					initial_balance = rs.getDouble(1);
 				}
 				stmt.close();
+
 
 				//Find final balance
 				double final_balance = 0.0;
@@ -103,15 +108,21 @@ public class Manager
 				int startDate = 1;
 				double accrue_total = 0.0;
 				int nowDate = 0;
-				for (int i = 0; i < dateArray.size(); i++){
-					nowDate = Integer.parseInt(dateArray.get(i).substring(4,5));
+				for (int i = 0; i <= dateArray.size(); i++){
+					if (i == (dateArray.size())){
+						nowDate = 31;
+					}
+					else{
+						nowDate = Integer.parseInt(dateArray.get(i).substring(3,5));
+					}
 					accrue_total += new_initial_balance * (nowDate - startDate);
 					startDate = nowDate;
-					new_initial_balance = balanceArray.get(i);
+					if (i != (dateArray.size())){
+						new_initial_balance = balanceArray.get(i);
+					}
 				}
-				accrue_total += final_balance * (30 - startDate);
-				double average = accrue_total / 30;
-				double accrue_interest = average * 1.03;
+				double average = accrue_total / 31;
+				double accrue_interest = average * 0.03;
 
 				String query = "update Market_Accounts SET balance = (balance + " + accrue_interest + ") where taxId = " + taxid;
 	        	PreparedStatement stmt5 = connection.prepareStatement(query);
@@ -126,7 +137,6 @@ public class Manager
 					today_date = rs.getString(1);
 				}
 				stmt6.close();
-				System.out.println(final_balance + " " + accrue_interest);
 
 	        	String query2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Interest', ?, NULL, NULL, ?, ?, ?, ?);";
 		        PreparedStatement stmt7 = connection.prepareStatement(query2);
@@ -176,8 +186,10 @@ public class Manager
 				int t5 = rs.getInt("numShares");
 				int t6 = rs.getInt("symbol");
 				int t7 = rs.getInt("taxId");
+				double t8 = rs.getDouble("prev_balance");
+				double t9 = rs.getInt("new_balance");
 				System.out.println("Trans History for: " + name);
-				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7);
+				System.out.println("transactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7 + ", prev_balance: " + t8 + ", new_balance: " + t9);
 			}
 			stmt2.close();
 
@@ -223,22 +235,25 @@ public class Manager
 			rs.close();
 
 			//Calculate the average daily balance
+			double new_initial_balance = initial_balance;
 			int startDate = 1;
-			double totalInterest = 0.0;
-			double balance = initial_balance;
+			double accrue_total = 0.0;
 			int nowDate = 0;
-			for (int i = 0; i < dateArray.size(); i++){
-				nowDate = Integer.parseInt(dateArray.get(i).substring(4,5));
-				totalInterest += initial_balance * (nowDate - startDate);
+			for (int i = 0; i <= dateArray.size(); i++){
+				if (i == (dateArray.size())){
+					nowDate = 31;
+				}
+				else{
+					nowDate = Integer.parseInt(dateArray.get(i).substring(3,5));
+				}
+				accrue_total += new_initial_balance * (nowDate - startDate);
 				startDate = nowDate;
-				initial_balance = balanceArray.get(i);
+				if (i != (dateArray.size())){
+					new_initial_balance = balanceArray.get(i);
+				}
 			}
-			totalInterest += final_balance * (30 - startDate);
-			double average = totalInterest / 30;
-			double accrue_interest = average * 1.03;
-
-			//Calculate total earnings/loss (including interst)
-			total += accrue_interest;
+			double average = accrue_total / 31;
+			double accrue_interest = average * 0.03;
 
 			if(total >= 0){
 				System.out.println("Total earnings: " + total);
@@ -399,8 +414,9 @@ public class Manager
 		  		case "3":
 		  			listActive();
 		  			break;
-		  		// case "4":
-		  		// 	genDTER();
+		  		case "4":
+		  			genDTER();
+		  			break;
 		  		case "5":
 		  			System.out.println("\nWhich customer's report would you like to check?");
 		  			String name5 = reader.nextLine();
