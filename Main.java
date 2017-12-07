@@ -80,6 +80,7 @@ public class Main{
 						        			}
 						        			else{
 						        				System.out.println("Log in successfully!");
+						        				connection.close();
 						        				Trader trader = new Trader(username);
 												trader.menu();
 												break;
@@ -102,6 +103,7 @@ public class Main{
 											System.out.println("Log in successfully!");
 											Manager manager = new Manager("admin");
 											manager.menu();
+											manager.closeConnection();
 											break;
 										}
 										else{

@@ -102,9 +102,9 @@ public class Manager
 					balanceArray.add(rs.getDouble(2));
 				}
 				stmt4.close();
-				double new_initial_balance = initial_balance;
 
 				//Calculate the average daily balance
+				double new_initial_balance = initial_balance;
 				int startDate = 1;
 				double accrue_total = 0.0;
 				int nowDate = 0;
@@ -184,7 +184,7 @@ public class Manager
 				String t3 = rs.getString("type");
 				Double t4 = rs.getDouble("amount");
 				int t5 = rs.getInt("numShares");
-				int t6 = rs.getInt("symbol");
+				String t6 = rs.getString("symbol");
 				int t7 = rs.getInt("taxId");
 				double t8 = rs.getDouble("prev_balance");
 				double t9 = rs.getInt("new_balance");
