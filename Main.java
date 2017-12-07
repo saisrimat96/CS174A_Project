@@ -83,6 +83,7 @@ public class Main{
 						        				connection.close();
 						        				Trader trader = new Trader(username);
 												trader.menu();
+												trader.closeConnection();
 												break;
 						        			}
 						    			}

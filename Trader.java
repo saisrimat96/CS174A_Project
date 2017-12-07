@@ -27,12 +27,22 @@ public class Trader
 	public static final String HOST = "jdbc:mysql://cs174a.engr.ucsb.edu:3306/srimatDB";
     public static final String USER = "srimat";
     public static final String PWD = "504";
+    Connection connection = null;
 	
 	
 	//Constructor -
 	public Trader(String username)
 	{
 		
+	    Statement statement = null;
+	    try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+			connection=DriverManager.getConnection(HOST,USER,PWD);
+		} 
+		catch(Exception e){
+			System.out.println(e);
+		}
 		this.username = username;
 
 
@@ -78,24 +88,17 @@ public class Trader
 	//Make Deposit: Takes in taxid and amount one wishes to deposit
 	public void Deposit(int taxid, double amount)
 	{
-		Connection connection = null;
-	    Statement statement = null;
+		
 	    DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e){
-			e.printStackTrace();
-		}
+		
 
 		try
 		{
 			double trans = amount;
 			double temp = 0.0;
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
@@ -136,26 +139,26 @@ public class Trader
 
 	//Make Withdrawal: Takes in taxid and amount one wishes to Withdrawal
 	public void Withdrawal(int taxid, double amount)
-	{
-		Connection connection = null;
+	 {
+	// 	Connection connection = null;
 	    Statement statement = null;
 	    DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
 			double trans = amount;
 			double temp = 0.0;
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			// connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
@@ -206,7 +209,7 @@ public class Trader
 		int value = 20;
 		double pre_balance = 0.0;
 		double current_stock = 0.0;
-		Connection connection = null;
+		//Connection connection = null;
 		DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
 
@@ -222,7 +225,7 @@ public class Trader
 
 		try
 		{
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			//connection=DriverManager.getConnection(HOST,USER,PWD);
 
 			Statement open = connection.createStatement();
 			ResultSet rs = open.executeQuery("select market FROM Customer_Profile WHERE name = 'John Admin'");
@@ -230,103 +233,106 @@ public class Trader
 				String market = rs.getString(1);
 				if(market.equals("closed")) {
 					System.out.println("I'm sorry, the stock market is currently closed.");
+					return;
 				}
 			}
-			else{
-				Statement stmt=connection.createStatement();
-				rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
-				while(rs.next())
-				{
-					pre_balance = rs.getDouble("balance");
-				}
+			
+			
+			Statement stmt=connection.createStatement();
+			rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			while(rs.next())
+			{
+				pre_balance = rs.getDouble("balance");
+			}
 
 
-				String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
-				PreparedStatement query = connection.prepareStatement(QUERY);
+			String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
+			PreparedStatement query = connection.prepareStatement(QUERY);
+			query.setString(1, symbol);
+			rs = query.executeQuery();
+
+			if(rs.next()){
+				current_stock = rs.getDouble(1);
+			}
+
+			double total_buy = (numShares * current_stock) + value;
+
+			if(pre_balance < total_buy)
+			{
+				System.out.println("\nI'm sorry, but you do not have enough money to purchase these stocks.");
+			}
+			else
+			{	
+				QUERY = "SELECT account_id FROM Stock_Accounts WHERE symbol=? AND purchase_price = ? AND taxId = ?";
+				query = connection.prepareStatement(QUERY);
 				query.setString(1, symbol);
+				query.setDouble(2, current_stock);
+				query.setInt(3, taxid);
 				rs = query.executeQuery();
-
-				if(rs.next()){
-					current_stock = rs.getDouble(1);
-				}
-
-				double total_buy = (numShares * current_stock) + value;
-
-				if(pre_balance < total_buy)
+				boolean empty = true;
+				while (rs.next()) 
 				{
-					System.out.println("\nI'm sorry, but you do not have enough money to purchase these stocks.");
+					empty = false;
+				}
+				if(empty)
+				{
+					String QUERY4 = "INSERT INTO `Stock_Accounts` (`account_id`, `taxId`, `balance`, `symbol`, `purchase_price`) VALUES (NULL, ?, ?, ?, ?);";
+					PreparedStatement myQuery4 = connection.prepareStatement(QUERY4);
+					myQuery4.setInt(1, taxid);
+					myQuery4.setDouble(2, numShares);
+					myQuery4.setString(3, symbol);
+					myQuery4.setDouble(4, current_stock);
+					myQuery4.executeUpdate();
+					myQuery4.close();
 				}
 				else
 				{	
-					QUERY = "SELECT account_id FROM Stock_Accounts WHERE symbol=? AND purchase_price = ? AND taxId = ?";
-					query = connection.prepareStatement(QUERY);
-					query.setString(1, symbol);
-					query.setDouble(2, current_stock);
-					query.setInt(3, taxid);
-					rs = query.executeQuery();
-					boolean empty = true;
-					while (rs.next()) 
-					{
-						empty = false;
-					}
-					if(empty)
-					{
-						String QUERY4 = "INSERT INTO `Stock_Accounts` (`account_id`, `taxId`, `balance`, `symbol`, `purchase_price`) VALUES (NULL, ?, ?, ?, ?);";
-						PreparedStatement myQuery4 = connection.prepareStatement(QUERY4);
-						myQuery4.setInt(1, taxid);
-						myQuery4.setDouble(2, numShares);
-						myQuery4.setString(3, symbol);
-						myQuery4.setDouble(4, current_stock);
-						myQuery4.executeUpdate();
-						myQuery4.close();
-					}
-					else
-					{	
-						String QUERY5 = "update Stock_Accounts set balance = balance + ? where taxId = ? and purchase_price = ?";
-						PreparedStatement myQuery5 = connection.prepareStatement(QUERY5);
-						myQuery5.setInt(1, numShares);
-						myQuery5.setInt(2, taxid);
-						myQuery5.setDouble(3, current_stock);
-						myQuery5.executeUpdate();
-						myQuery5.close();
-							
-					}
-					query.close();
-
-					double post_balance = pre_balance - total_buy;
-
-					String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Buy', -?, ?, ?, ?, ?,?,NULL);";
-			        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
-			        myQuery1.setString(1, date);
-			        myQuery1.setDouble(2,total_buy);
-			        myQuery1.setInt(3,numShares);
-			        myQuery1.setString(4, symbol);
-			        myQuery1.setInt(5, taxid);
-			        myQuery1.setDouble(6, pre_balance);
-			        myQuery1.setDouble(7, post_balance);
-			        myQuery1.executeUpdate();
-			        myQuery1.close();
-
-					String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
-					
-
-					PreparedStatement myQuery = connection.prepareStatement(QUERY1);
-					myQuery.setDouble(1, post_balance);
-					myQuery.setInt(2, taxid);
-			        myQuery.executeUpdate();
-			        myQuery.close();
-			        
-			        
-
-
-
-			        connection.close();
-
-			        System.out.println("\nThank you! You have purchased:  ");
-			        System.out.println(numShares + " shares of " + symbol);
-			        System.out.println("Total cost of transaction: " + df.format(total_buy));
+					String QUERY5 = "update Stock_Accounts set balance = balance + ? where taxId = ? and purchase_price = ?";
+					System.out.println("I'm here");
+					PreparedStatement myQuery5 = connection.prepareStatement(QUERY5);
+					myQuery5.setInt(1, numShares);
+					myQuery5.setInt(2, taxid);
+					myQuery5.setDouble(3, current_stock);
+					myQuery5.executeUpdate();
+					myQuery5.close();
+						
 				}
-		}
+				query.close();
+
+				double post_balance = pre_balance - total_buy;
+
+				String QUERY2 = "INSERT INTO `Transactions` (`transactionsId`,`date`,`type`,`amount`,`numShares`, `symbol`, `taxId`, `prev_balance`, `new_balance`, `earnings`) VALUES (NULL, ?,'Buy', -?, ?, ?, ?, ?,?,NULL);";
+		        PreparedStatement myQuery1 = connection.prepareStatement(QUERY2);
+		        myQuery1.setString(1, date);
+		        myQuery1.setDouble(2,total_buy);
+		        myQuery1.setInt(3,numShares);
+		        myQuery1.setString(4, symbol);
+		        myQuery1.setInt(5, taxid);
+		        myQuery1.setDouble(6, pre_balance);
+		        myQuery1.setDouble(7, post_balance);
+		        myQuery1.executeUpdate();
+		        myQuery1.close();
+
+				String QUERY1 = "update Market_Accounts set balance = ? where taxId = ?";
+				
+
+				PreparedStatement myQuery = connection.prepareStatement(QUERY1);
+				myQuery.setDouble(1, post_balance);
+				myQuery.setInt(2, taxid);
+		        myQuery.executeUpdate();
+		        myQuery.close();
+		        
+		        
+
+
+
+		        connection.close();
+
+		        System.out.println("\nThank you! You have purchased:  ");
+		        System.out.println(numShares + " shares of " + symbol);
+		        System.out.println("Total cost of transaction: " + df.format(total_buy));
+			}
+		
 
 		}
 		catch(SQLException e)
@@ -339,7 +345,7 @@ public class Trader
 	
 	//Sell stock. Takes in taxid, number of shares, and stock symbol
 	public void Sell(int taxid, int numShares,String symbol)
-	{
+	 {
 		DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
 
@@ -356,18 +362,18 @@ public class Trader
 		double earnings = 0.0;
 		double new_balance = 0.0;
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
-			Connection connection=DriverManager.getConnection(HOST,USER,PWD);
+			// Connection connection=DriverManager.getConnection(HOST,USER,PWD);
 
 			Statement open = connection.createStatement();
 			ResultSet rs = open.executeQuery("select market FROM Customer_Profile WHERE name = 'John Admin'");
@@ -375,77 +381,80 @@ public class Trader
 				String market = rs.getString(1);
 				if(market.equals("closed")) {
 					System.out.println("I'm sorry, the stock market is currently closed.");
+					return;
 				}
 			}
 
-			else{
-				Statement stmt=connection.createStatement();
+		
+			Statement stmt=connection.createStatement();
 
-				rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
-				if(rs.next()){
-					prev_balance = rs.getDouble(1);	
-				}
-				
-				stmt.close();
+			rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
+			if(rs.next()){
+				prev_balance = rs.getDouble(1);	
+			}
+			
+			stmt.close();
 
-				String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
-				PreparedStatement query = connection.prepareStatement(QUERY);
-				query.setString(1, symbol);
-				rs = query.executeQuery();
+			String QUERY = "SELECT current_price FROM Stock WHERE symbol=?";
+			PreparedStatement query = connection.prepareStatement(QUERY);
+			query.setString(1, symbol);
+			rs = query.executeQuery();
 
-				if(rs.next()){
-					curr_price = rs.getDouble(1);
-					System.out.println("Current price of stock is: " + df.format(curr_price));
-				}
-				query.close();
+			if(rs.next()){
+				curr_price = rs.getDouble(1);
+				System.out.println("Current price of stock is: " + df.format(curr_price));
+			}
+			query.close();
 
-				System.out.println("\nYou purchased: ");
+			System.out.println("\nYou purchased: ");
+			
 
-				String query_stock = "SELECT balance, purchase_price FROM Stock_Accounts WHERE taxId=? and symbol=?;";
-				PreparedStatement q_stock = connection.prepareStatement(query_stock);
-				q_stock.setInt(1, taxid);
-				q_stock.setString(2, symbol);
-				rs = q_stock.executeQuery();
-				ArrayList<Integer> balance = new ArrayList<Integer>();
-				ArrayList<Double> price = new ArrayList<Double>();
-				ArrayList<Integer> amt = new ArrayList<Integer>();
+			String query_stock = "SELECT balance, purchase_price FROM Stock_Accounts WHERE taxId=? and symbol=?;";
+			PreparedStatement q_stock = connection.prepareStatement(query_stock);
+			q_stock.setInt(1, taxid);
+			q_stock.setString(2, symbol);
+			rs = q_stock.executeQuery();
+			ArrayList<Integer> balance = new ArrayList<Integer>();
+			ArrayList<Double> price = new ArrayList<Double>();
+			ArrayList<Integer> amt = new ArrayList<Integer>();
 
-				while(rs.next())
+			while(rs.next())
+			{
+				balance.add(rs.getInt(1));
+				price.add(rs.getDouble(2));
+			}
+
+			for(int i = 0; i < balance.size(); i++)
+			{	
+				Integer temp = balance.get(i);
+				Double prev_price = price.get(i);
+				System.out.println(temp + " shares at " + df.format(prev_price));
+				System.out.println("\nHow many of this would you like to sell?");
+				String t1 = reader.nextLine();
+				Integer amt1 = Integer.parseInt(t1);
+				if(amt1 > balance.get(i))
 				{
-					balance.add(rs.getInt(1));
-					price.add(rs.getDouble(2));
-				}
-
-				for(int i = 0; i < balance.size(); i++)
-				{	
-					Integer temp = balance.get(i);
-					Double prev_price = price.get(i);
-					System.out.println(temp + " shares at " + df.format(prev_price));
-					System.out.println("\nHow many of this would you like to sell?");
-					String t1 = reader.nextLine();
-					Integer amt1 = Integer.parseInt(t1);
-					if(amt1 > balance.get(i))
-					{
-						System.out.println("I'm sorry but you do not have enough shares to sell, please try again");
-						break;
-					}
-					else{
-						amt.add(amt1);
-					}				
-					
-				}
-
-				Integer sum = 0;
-				for(int i = 0; i<amt.size(); i++)
-				{
-					sum+=amt.get(i);
-				}
-
-				if(sum != numShares)
-				{
-					System.out.println("\nI'm sorry, the total shares inputted does not match the desired number of shares");
+					System.out.println("I'm sorry but you do not have enough shares to sell, please try again");
+					break;
 				}
 				else{
+					amt.add(amt1);
+				}				
+				
+			}
+
+			Integer sum = 0;
+			for(int i = 0; i<amt.size(); i++)
+			{
+				sum+=amt.get(i);
+			}
+
+			if(sum != numShares)
+			{
+				System.out.println("\nI'm sorry, the total shares inputted does not match the desired number of shares");
+			}
+			else
+			{
 
 				q_stock.close();
 				rs.close();
@@ -502,10 +511,8 @@ public class Trader
 				System.out.println("Sell was a success! Total profit is: " + df.format(total_buy));
 
 				connection.close();
-		}
-		}
-			
-		}
+			}
+			}	
 		catch(SQLException e)
 	    {
 	    	e.printStackTrace();
@@ -515,23 +522,23 @@ public class Trader
 	//Show's current balance in trader's market account
 	public void showBalance()
 	{
-		Connection connection = null;
+		// Connection connection = null;
 	    Statement statement = null;
 	    DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			// connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
@@ -553,20 +560,20 @@ public class Trader
 	{
 		DecimalFormat df = new DecimalFormat();
 		df.setMaximumFractionDigits(3);
-		Connection connection = null;
+		// Connection connection = null;
 	    Statement statement = null;
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e){
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e){
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			// connection=DriverManager.getConnection(HOST,USER,PWD);
 			Statement stmt=connection.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM Transactions WHERE taxId=" + taxid);
 			System.out.println("\nTrans History for: " + name);
@@ -597,20 +604,20 @@ public class Trader
 	//Retrieves current price of a stock and the Actor or Director's Profile
 	public void showStockProf(String symbol)
 	{
-		Connection connection = null;
+		// Connection connection = null;
 	    Statement statement = null;
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e){
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e){
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
-			connection=DriverManager.getConnection(HOST,USER,PWD);
+			// connection=DriverManager.getConnection(HOST,USER,PWD);
 			String query = "SELECT symbol, current_price FROM Stock where symbol=?";
 			PreparedStatement myquery = connection.prepareStatement(query);
 			myquery.setString(1, symbol);
@@ -653,17 +660,17 @@ public class Trader
 	//Shows information about movie. Function takes in string: Movie Title
 	public void Movie(String title)
 	{
-		Connection connection = null;
+		// Connection connection = null;
 	    
 
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
@@ -695,16 +702,16 @@ public class Trader
 	//Select movies that were rated five stars between certain number of years
 	public void topMovie(int start, int end)
 	{
-		Connection connection = null;
+		// Connection connection = null;
 	    
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
@@ -736,19 +743,30 @@ public class Trader
 	    }
 	}
 
+	public void closeConnection()
+	{
+		try{
+			connection.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+	}
+
 	//Find reviews for a particular movie. Takes String input.
 	public void reviews(String title)
 	{
-		Connection connection = null;
+		// Connection connection = null;
 	    
-		try
-		{
-			Class.forName("com.mysql.jdbc.Driver");
-		} 
-		catch(ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
+		// try
+		// {
+		// 	Class.forName("com.mysql.jdbc.Driver");
+		// } 
+		// catch(ClassNotFoundException e)
+		// {
+		// 	e.printStackTrace();
+		// }
 
 		try
 		{
