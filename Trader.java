@@ -5,11 +5,13 @@ Sai Srimat, Ziheng Song: Trader Class
 
 */
 
+
 import java.sql.*;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.text.DecimalFormat;
 
 
 public class Trader
@@ -30,6 +32,7 @@ public class Trader
 	//Constructor -
 	public Trader(String username)
 	{
+		
 		this.username = username;
 
 
@@ -77,6 +80,8 @@ public class Trader
 	{
 		Connection connection = null;
 	    Statement statement = null;
+	    DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 
 		try
 		{
@@ -95,7 +100,7 @@ public class Trader
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
 				temp = rs.getDouble(1);
-				System.out.println("\nYour Current Balance before Deposit: " + temp);
+				System.out.println("\nYour Current Balance before Deposit: " + df.format(temp));
 				amount += temp;
 			}
 			rs.close();
@@ -119,7 +124,7 @@ public class Trader
 	        myQuery1.close();
 	        connection.close();
 
-	        System.out.println("\nYour transaction was a success! New Current Balance is: " + amount);
+	        System.out.println("\nYour transaction was a success! New Current Balance is: " + df.format(amount));
 
 
 	    }
@@ -134,6 +139,8 @@ public class Trader
 	{
 		Connection connection = null;
 	    Statement statement = null;
+	    DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 
 		try
 		{
@@ -153,7 +160,7 @@ public class Trader
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
 				temp = rs.getDouble(1);
-				System.out.println("\nYour Current Balance before Withdrawal: " + temp);
+				System.out.println("\nYour Current Balance before Withdrawal: " + df.format(temp));
 				amount = temp - trans;
 			}
 			rs.close();
@@ -182,7 +189,7 @@ public class Trader
 		        myQuery1.close();
 		        connection.close();
 
-		        System.out.println("\nYour transaction was a success! New Current Balance is: " + amount);
+		        System.out.println("\nYour transaction was a success! New Current Balance is: " + df.format(amount));
 			}
 			
 
@@ -200,6 +207,8 @@ public class Trader
 		double pre_balance = 0.0;
 		double current_stock = 0.0;
 		Connection connection = null;
+		DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 
 		try
 		{
@@ -305,7 +314,7 @@ public class Trader
 
 		        System.out.println("\nThank you! You have purchased:  ");
 		        System.out.println(numShares + " shares of " + symbol);
-		        System.out.println("Total cost of transaction: " + total_buy);
+		        System.out.println("Total cost of transaction: " + df.format(total_buy));
 			}
 
 
@@ -319,6 +328,8 @@ public class Trader
 	//Sell stock. Takes in taxid, number of shares, and stock symbol
 	public void Sell(int taxid, int numShares,String symbol)
 	{
+		DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 
 		Scanner reader = new Scanner(System.in);
 		double prev_balance = 0.0;
@@ -361,7 +372,7 @@ public class Trader
 
 			if(rs.next()){
 				curr_price = rs.getDouble(1);
-				System.out.println("Current price of stock is: " + curr_price);
+				System.out.println("Current price of stock is: " + df.format(curr_price));
 			}
 			query.close();
 
@@ -386,7 +397,7 @@ public class Trader
 			{	
 				Integer temp = balance.get(i);
 				Double prev_price = price.get(i);
-				System.out.println(temp + " shares at " + prev_price);
+				System.out.println(temp + " shares at " + df.format(prev_price));
 				System.out.println("\nHow many of this would you like to sell?");
 				String t1 = reader.nextLine();
 				Integer amt1 = Integer.parseInt(t1);
@@ -439,7 +450,7 @@ public class Trader
 		    myQuery1.setString(4, symbol);
 		    myQuery1.setInt(5, taxid);
 		    myQuery1.setDouble(6, prev_balance);
-		    myQuery1.setDouble(7, new_balance);
+		    myQuery1.setDouble(7, total_buy);
 		    myQuery1.setDouble(8, earnings);
 		    myQuery1.executeUpdate();
 		    myQuery1.close();
@@ -465,7 +476,7 @@ public class Trader
 			}
 			myQuery2.close();
 
-			System.out.println("Sell was a success! Total profit is: " + total_buy);
+			System.out.println("Sell was a success! Total profit is: " + df.format(total_buy));
 
 			connection.close();
 		}
@@ -482,6 +493,8 @@ public class Trader
 	{
 		Connection connection = null;
 	    Statement statement = null;
+	    DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 
 		try
 		{
@@ -499,7 +512,7 @@ public class Trader
 			ResultSet rs = stmt.executeQuery("SELECT balance FROM Market_Accounts WHERE taxId=" + taxid);
 			if(rs.next()){
 				double temp = rs.getDouble(1);
-				System.out.println("\nYour Current Balance is: " + temp);
+				System.out.println("\nYour Current Balance is: " + df.format(temp));
 			}
 			rs.close();
 			stmt.close();
@@ -514,6 +527,8 @@ public class Trader
 	//Show's trader's transaction history
 	public void showTransactions()
 	{
+		DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
 		Connection connection = null;
 	    Statement statement = null;
 
@@ -542,7 +557,7 @@ public class Trader
 				Double t8 = rs.getDouble("prev_balance");
 				Double t9 = rs.getDouble("new_balance");
 
-				System.out.println("\ntransactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + t4 + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7 + ", prev_balance: " + t8 + ", new_balance: " + t9);
+				System.out.println("\ntransactionsID: " + t1 + ", date: " + t2 + ", type: " + t3 + ", amount: " + df.format(t4) + ", numShares: " + t5 + ", symbol: " + t6 + ", taxId: " + t7 + ", prev_balance: " + df.format(t8) + ", new_balance: " + df.format(t9));
 
 			}
 			rs.close();
