@@ -3,16 +3,15 @@
 Sai Srimat, Ziheng Song: Main Class
 
 */
-
 import java.io.*;
 import java.sql.*;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main{
 	public static final String HOST = "jdbc:mysql://cs174a.engr.ucsb.edu:3306/srimatDB";
     public static final String USER = "srimat";
     public static final String PWD = "504";
-	
+
 	public static void main(String [ ] args)
 	{
 		Scanner reader = new Scanner(System.in);
@@ -80,12 +79,12 @@ public class Main{
 						        			}
 						        			else{
 						        				System.out.println("Log in successfully!");
-						        				connection.close();
 						        				Trader trader = new Trader(username);
 												trader.menu();
-												trader.closeConnection();
 												break;
 						        			}
+						        			resultSet.close();
+							        		connection.close();
 						    			}
 						    			catch(SQLException e)
 						    			{
@@ -104,7 +103,6 @@ public class Main{
 											System.out.println("Log in successfully!");
 											Manager manager = new Manager("admin");
 											manager.menu();
-											manager.closeConnection();
 											break;
 										}
 										else{

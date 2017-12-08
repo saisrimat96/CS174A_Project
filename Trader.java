@@ -2,9 +2,7 @@
 
 Sai Srimat, Ziheng Song: Trader Class
 
-
 */
-
 
 import java.sql.*;
 import java.util.Scanner;
